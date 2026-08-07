@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+  <meta name="theme-color" content="#071018">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="AeroBrief">
+  <meta name="description" content="iPad-first flight planning and briefing app for flight simulation.">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <link rel="icon" href="/icons/icon-192.png">
+  <link rel="preconnect" href="https://unpkg.com">
+  <link rel="preconnect" href="https://tile.openstreetmap.org">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="/styles.css">
+  <title>AeroBrief</title>
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <aside class="sidebar" id="sidebar" aria-label="Primary navigation">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 48 48"><path d="M4 27.5 21.5 22 28 7l4 1-2 13 12-3.5 2 3.5-14 7 1.5 12-3 1-7-10L7 33z"/></svg>
+        </div>
+        <div class="brand-copy"><strong>AeroBrief</strong><span>SIM DISPATCH</span></div>
+      </div>
+
+      <nav class="nav-list">
+        <button class="nav-item active" data-view="plan"><span>PLAN</span><b>01</b></button>
+        <button class="nav-item" data-view="brief"><span>BRIEF</span><b>02</b></button>
+        <button class="nav-item" data-view="map"><span>MAP</span><b>03</b></button>
+        <button class="nav-item" data-view="ofp"><span>OFP</span><b>04</b></button>
+        <button class="nav-item" data-view="saved"><span>SAVED</span><b>05</b></button>
+        <button class="nav-item" data-view="settings"><span>SETTINGS</span><b>06</b></button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="status-row"><span class="status-dot" id="onlineDot"></span><span id="onlineLabel">ONLINE</span></div>
+        <span>SIMULATION USE ONLY</span>
+      </div>
+    </aside>
+
+    <main class="main-shell">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="icon-button menu-button" id="menuButton" aria-label="Toggle navigation">☰</button>
+          <div>
+            <div class="eyebrow" id="viewEyebrow">FLIGHT PLANNING</div>
+            <h1 id="viewTitle">Build a flight</h1>
+          </div>
+        </div>
+        <div class="flight-strip" aria-label="Active flight">
+          <div><span>FLT</span><strong id="stripCallsign">—</strong></div>
+          <div><span>ROUTE</span><strong id="stripRoute">— → —</strong></div>
+          <div><span>EQUIP</span><strong id="stripAircraft">—</strong></div>
+          <div><span>REG</span><strong id="stripReg">—</strong></div>
+        </div>
+        <div class="clock-box"><span>ZULU</span><strong id="zuluClock">00:00:00</strong></div>
+      </header>
+
+      <div class="content" id="content">
+        <section class="view active" id="view-plan" data-view-panel="plan">
+          <div class="hero-grid">
+            <article class="route-hero panel">
+              <div class="route-airports">
+                <div><span>ORIGIN</span><strong id="heroOrigin">—</strong><small id="heroOriginName">Enter an airport</small></div>
+                <div class="route-line"><span class="plane-glyph">✈</span></div>
+                <div class="align-right"><span>DESTINATION</span><strong id="heroDestination">—</strong><small id="heroDestinationName">Enter an airport</small></div>
+              </div>
+              <div class="metric-row">
+                <div><span>DISTANCE</span><strong id="metricDistance">—</strong><small>NM</small></div>
+                <div><span>COURSE</span><strong id="metricCourse">—</strong><small>°T</small></div>
+                <div><span>ETE</span><strong id="metricEte">—</strong><small>HH:MM</small></div>
+                <div><span>BLOCK</span><strong id="metricBlock">—</strong><small>HH:MM</small></div>
+                <div><span>TRIP FUEL</span><strong id="metricFuel">—</strong><small id="metricFuelUnit">UNIT</small></div>
+              </div>
+            </article>
+
+            <article class="panel action-panel">
+              <div class="panel-heading"><div><span class="eyebrow">ACTIVE FLIGHT</span><h2>Dispatch actions</h2></div><span class="badge neutral" id="planStatus">DRAFT</span></div>
+              <button class="primary-button" id="buildButton">BUILD FLIGHT & BRIEFING</button>
+              <div class="button-grid">
+                <button class="secondary-button" id="savePlanButton">SAVE FLIGHT</button>
+                <button class="secondary-button" id="openSimBriefButton">OPEN SIMBRIEF</button>
+              </div>
+              <p class="hint">All plans stay on this device unless you export them.</p>
+            </article>
+          </div>
+
+          <div class="planner-grid">
+            <article class="panel form-panel">
+              <div class="panel-heading"><div><span class="eyebrow">IDENTITY</span><h2>Flight details</h2></div></div>
+              <div class="form-grid cols-4">
+                <label><span>Callsign</span><input id="callsign" autocomplete="off" placeholder="N172RW"></label>
+                <label><span>Aircraft ICAO</span><input id="aircraft" autocomplete="off" placeholder="C172"></label>
+                <label><span>Registration</span><input id="registration" autocomplete="off" placeholder="N172RW"></label>
+                <label><span>Flight rules</span><select id="flightRules"><option>IFR</option><option>VFR</option></select></label>
+                <label><span>Origin ICAO</span><input id="origin" class="icao-input" maxlength="4" autocomplete="off" placeholder="KIND"></label>
+                <label><span>Destination ICAO</span><input id="destination" class="icao-input" maxlength="4" autocomplete="off" placeholder="KMIA"></label>
+                <label><span>Alternate ICAO</span><input id="alternate" class="icao-input" maxlength="4" autocomplete="off" placeholder="KFLL"></label>
+                <label><span>Departure date</span><input id="departureDate" type="date"></label>
+                <label><span>Off-block Z</span><input id="departureTime" type="time"></label>
+                <label><span>Cruise altitude</span><input id="cruiseAltitude" type="number" min="0" step="100" inputmode="numeric" placeholder="10000"></label>
+                <label><span>True airspeed</span><input id="tas" type="number" min="1" step="1" inputmode="numeric" placeholder="120"></label>
+                <label><span>Taxi minutes</span><input id="taxiMinutes" type="number" min="0" step="1" inputmode="numeric" value="15"></label>
+              </div>
+              <label class="full-field"><span>Route</span><textarea id="route" rows="3" placeholder="DCT VHP VLA DCT"></textarea></label>
+              <label class="full-field"><span>Remarks</span><textarea id="remarks" rows="2" placeholder="Simulator, network, or dispatch notes"></textarea></label>
+            </article>
+
+            <article class="panel form-panel">
+              <div class="panel-heading"><div><span class="eyebrow">PERFORMANCE</span><h2>Planning assumptions</h2></div></div>
+              <div class="form-grid cols-2">
+                <label><span>Forecast wind from</span><input id="windDirection" type="number" min="0" max="360" step="1" inputmode="numeric" placeholder="270"></label>
+                <label><span>Wind speed (kt)</span><input id="windSpeed" type="number" min="0" step="1" inputmode="numeric" placeholder="20"></label>
+                <label><span>Fuel burn / hour</span><input id="fuelBurn" type="number" min="0" step="0.1" inputmode="decimal" placeholder="9.5"></label>
+                <label><span>Fuel unit</span><select id="fuelUnit"><option>GAL</option><option>LB</option><option>KG</option></select></label>
+                <label><span>Reserve minutes</span><input id="reserveMinutes" type="number" min="0" step="5" inputmode="numeric" value="45"></label>
+                <label><span>Extra fuel</span><input id="extraFuel" type="number" min="0" step="0.1" inputmode="decimal" value="0"></label>
+              </div>
+              <div class="fuel-summary">
+                <div><span>EST GS</span><strong id="calcGroundSpeed">—</strong><small>KT</small></div>
+                <div><span>TRIP</span><strong id="calcTripFuel">—</strong><small id="calcTripUnit">GAL</small></div>
+                <div><span>RESERVE</span><strong id="calcReserveFuel">—</strong><small id="calcReserveUnit">GAL</small></div>
+                <div><span>TOTAL</span><strong id="calcTotalFuel">—</strong><small id="calcTotalUnit">GAL</small></div>
+              </div>
+              <div class="notice info"><strong>Planning model</strong><span>This app calculates great-circle distance and a simple wind-adjusted cruise estimate. Use the aircraft’s actual performance data for realism.</span></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="view" id="view-brief" data-view-panel="brief">
+          <div class="section-toolbar">
+            <div><span class="eyebrow">LIVE DATA</span><h2>Weather and route briefing</h2></div>
+            <div class="toolbar-actions"><span class="updated-label" id="briefUpdated">NOT LOADED</span><button class="secondary-button compact" id="refreshBriefButton">REFRESH</button><button class="primary-button compact" id="printBriefButton">PRINT BRIEF</button></div>
+          </div>
+          <div id="alertBanner" class="notice info"><strong>No briefing loaded</strong><span>Build the flight to retrieve airport, weather, advisory and PIREP data.</span></div>
+          <div class="weather-grid" id="weatherGrid"></div>
+          <div class="brief-grid">
+            <article class="panel">
+              <div class="panel-heading"><div><span class="eyebrow">OPERATIONAL SCAN</span><h2>Alerts</h2></div><span class="badge neutral" id="alertCount">0</span></div>
+              <div id="operationalAlerts" class="stack-list empty-state">No alerts calculated.</div>
+            </article>
+            <article class="panel">
+              <div class="panel-heading"><div><span class="eyebrow">RUNWAY WIND</span><h2>Best runway estimate</h2></div></div>
+              <div id="runwayWind" class="runway-grid empty-state">Airport and wind data required.</div>
+            </article>
+          </div>
+          <article class="panel hazard-panel">
+            <div class="panel-heading"><div><span class="eyebrow">ROUTE HAZARDS</span><h2>SIGMETs, G-AIRMETs and PIREPs</h2></div><div class="segmented"><button class="active" data-hazard-filter="all">ALL</button><button data-hazard-filter="sigmet">SIGMET</button><button data-hazard-filter="gairmet">G-AIRMET</button><button data-hazard-filter="pirep">PIREP</button></div></div>
+            <div id="hazardList" class="hazard-list empty-state">No route data loaded.</div>
+          </article>
+        </section>
+
+        <section class="view" id="view-map" data-view-panel="map">
+          <div class="section-toolbar">
+            <div><span class="eyebrow">ROUTE OVERVIEW</span><h2>Great-circle map</h2></div>
+            <span class="badge neutral">OPENSTREETMAP</span>
+          </div>
+          <div class="map-layout">
+            <div class="panel map-panel"><div id="routeMap" role="img" aria-label="Flight route map"></div><div id="mapFallback" class="map-fallback">Build a flight to display the route.</div></div>
+            <aside class="panel map-sidebar">
+              <div class="panel-heading"><div><span class="eyebrow">ROUTE DATA</span><h2>Navigation summary</h2></div></div>
+              <div class="summary-list" id="mapSummary">
+                <div><span>ORIGIN</span><strong>—</strong></div><div><span>DESTINATION</span><strong>—</strong></div><div><span>DISTANCE</span><strong>—</strong></div><div><span>INITIAL COURSE</span><strong>—</strong></div><div><span>CRUISE</span><strong>—</strong></div><div><span>EST GS</span><strong>—</strong></div>
+              </div>
+              <div class="notice warning"><strong>Route depiction</strong><span>The line is a great-circle overview between airports, not a depiction of entered airways or procedures.</span></div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="view" id="view-ofp" data-view-panel="ofp">
+          <div class="section-toolbar">
+            <div><span class="eyebrow">OPERATIONAL FLIGHT PLAN</span><h2>Plaintext dispatch package</h2></div>
+            <div class="toolbar-actions"><button class="secondary-button compact" id="copyOfpButton">COPY</button><button class="secondary-button compact" id="downloadOfpButton">DOWNLOAD</button></div>
+          </div>
+          <div class="ofp-layout">
+            <article class="panel ofp-panel"><pre id="ofpText">BUILD A FLIGHT TO GENERATE AN OFP.</pre></article>
+            <aside class="panel simbrief-panel">
+              <div class="panel-heading"><div><span class="eyebrow">SIMBRIEF</span><h2>Import latest OFP</h2></div></div>
+              <label><span>Username or Pilot ID</span><input id="simbriefUser" autocomplete="off" placeholder="SimBrief user"></label>
+              <button class="primary-button" id="importSimBriefButton">IMPORT LATEST OFP</button>
+              <div id="simbriefStatus" class="notice info"><strong>Optional</strong><span>Importing updates the active plan from the latest SimBrief flight.</span></div>
+              <button class="secondary-button" id="openSimBriefFromOfp">OPEN SIMBRIEF DISPATCH</button>
+            </aside>
+          </div>
+        </section>
+
+        <section class="view" id="view-saved" data-view-panel="saved">
+          <div class="section-toolbar">
+            <div><span class="eyebrow">LOCAL LIBRARY</span><h2>Saved flights</h2></div>
+            <div class="toolbar-actions"><button class="secondary-button compact" id="importPlansButton">IMPORT JSON</button><button class="secondary-button compact" id="exportPlansButton">EXPORT JSON</button><input type="file" id="planFileInput" accept="application/json" hidden></div>
+          </div>
+          <div id="savedPlans" class="saved-grid"></div>
+        </section>
+
+        <section class="view" id="view-settings" data-view-panel="settings">
+          <div class="settings-grid">
+            <article class="panel form-panel">
+              <div class="panel-heading"><div><span class="eyebrow">APP</span><h2>Preferences</h2></div></div>
+              <div class="form-grid cols-2">
+                <label><span>Default aircraft</span><input id="settingAircraft" placeholder="C172"></label>
+                <label><span>Default registration</span><input id="settingRegistration" placeholder="N172RW"></label>
+                <label><span>Default TAS</span><input id="settingTas" type="number" min="1" placeholder="120"></label>
+                <label><span>Default fuel burn</span><input id="settingFuelBurn" type="number" min="0" step="0.1" placeholder="9.5"></label>
+                <label><span>Default reserve</span><input id="settingReserve" type="number" min="0" step="5" placeholder="45"></label>
+                <label><span>Default fuel unit</span><select id="settingFuelUnit"><option>GAL</option><option>LB</option><option>KG</option></select></label>
+              </div>
+              <button class="primary-button" id="saveSettingsButton">SAVE PREFERENCES</button>
+            </article>
+            <article class="panel">
+              <div class="panel-heading"><div><span class="eyebrow">INSTALL</span><h2>iPad setup</h2></div></div>
+              <ol class="instruction-list"><li>Open the Render URL in Safari.</li><li>Tap the Share button.</li><li>Choose <strong>Add to Home Screen</strong>.</li><li>Launch AeroBrief from the new icon for full-screen mode.</li></ol>
+              <div class="notice danger"><strong>Simulation only</strong><span>Not approved for real-world navigation, weather decisions, aircraft performance or operational control.</span></div>
+              <button class="danger-button" id="clearDataButton">CLEAR ALL LOCAL DATA</button>
+            </article>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Mobile navigation">
+      <button class="active" data-view="plan">PLAN</button><button data-view="brief">BRIEF</button><button data-view="map">MAP</button><button data-view="ofp">OFP</button><button data-view="saved">SAVED</button>
+    </nav>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
