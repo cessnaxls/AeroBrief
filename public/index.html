@@ -19,28 +19,30 @@
     <aside class="sidebar" id="sidebar">
       <div class="brand">
         <div class="brand-mark" aria-hidden="true">✈</div>
-        <div><strong>AeroBrief</strong><span>FLIGHT OPERATIONS</span></div>
+        <div class="brand-copy"><strong>AeroBrief</strong><span>FLIGHT OPERATIONS</span></div>
+        <button class="sidebar-stow-button" id="sidebarStowButton" aria-label="Stow navigation" title="Stow navigation">‹</button>
       </div>
       <nav class="nav-list" aria-label="Primary navigation">
-        <button class="nav-item active" data-view="plan"><span>PLAN</span><b>01</b></button>
-        <button class="nav-item" data-view="brief"><span>BRIEF</span><b>02</b></button>
-        <button class="nav-item" data-view="wb"><span>W&amp;B</span><b>03</b></button>
-        <button class="nav-item" data-view="performance"><span>PERFORMANCE</span><b>04</b></button>
-        <button class="nav-item" data-view="aircraft"><span>AIRCRAFT</span><b>05</b></button>
-        <button class="nav-item" data-view="checklists"><span>CHECKLISTS</span><b>06</b></button>
-        <button class="nav-item" data-view="flights"><span>FLIGHTS</span><b>07</b></button>
-        <button class="nav-item" data-view="settings"><span>SETTINGS</span><b>08</b></button>
+        <button class="nav-item active" data-view="plan"><span class="nav-icon">PL</span><span class="nav-label">PLAN</span><b>01</b></button>
+        <button class="nav-item" data-view="brief"><span class="nav-icon">BR</span><span class="nav-label">BRIEF</span><b>02</b></button>
+        <button class="nav-item" data-view="wb"><span class="nav-icon">WB</span><span class="nav-label">W&amp;B</span><b>03</b></button>
+        <button class="nav-item" data-view="performance"><span class="nav-icon">TD</span><span class="nav-label">TOLD</span><b>04</b></button>
+        <button class="nav-item" data-view="aircraft"><span class="nav-icon">AC</span><span class="nav-label">AIRCRAFT</span><b>05</b></button>
+        <button class="nav-item" data-view="checklists"><span class="nav-icon">CK</span><span class="nav-label">CHECKLISTS</span><b>06</b></button>
+        <button class="nav-item" data-view="flights"><span class="nav-icon">FL</span><span class="nav-label">FLIGHTS</span><b>07</b></button>
+        <button class="nav-item" data-view="settings"><span class="nav-icon">ST</span><span class="nav-label">SETTINGS</span><b>08</b></button>
       </nav>
       <div class="sidebar-footer">
         <div class="status-row"><span class="status-dot" id="onlineDot"></span><span id="onlineLabel">ONLINE</span></div>
         <span>SUPPLEMENTAL EFB · VERIFY ALL DATA</span>
       </div>
     </aside>
+    <button class="sidebar-scrim" id="sidebarScrim" aria-label="Close navigation" tabindex="-1"></button>
 
     <main class="main-shell">
       <header class="topbar">
         <div class="topbar-left">
-          <button class="icon-button" id="menuButton" aria-label="Toggle navigation">☰</button>
+          <button class="icon-button" id="menuButton" aria-label="Toggle navigation" aria-expanded="false" title="Toggle navigation">☰</button>
           <div><span class="eyebrow" id="viewEyebrow">FLIGHT PLANNING</span><h1 id="viewTitle">Build and validate a flight</h1></div>
         </div>
         <div class="flight-strip">
@@ -187,40 +189,94 @@
         </section>
 
         <section class="view" data-view-panel="performance">
-          <div class="section-toolbar">
-            <div><span class="eyebrow">POH / AFM TABLES</span><h2>Takeoff, landing and density-altitude worksheet</h2></div>
-            <span class="badge neutral" id="performanceBadge">UNVERIFIED</span>
+          <div class="section-toolbar told-toolbar">
+            <div><span class="eyebrow">TAKEOFF &amp; LANDING DATA</span><h2>Aircraft-specific TOLD calculation and report</h2></div>
+            <div class="toolbar-actions">
+              <span class="badge neutral" id="performanceBadge">UNVERIFIED</span>
+              <button class="secondary-button compact" id="syncToldButton">SYNC ROUTE / W&amp;B</button>
+              <button class="primary-button compact" id="calculatePerformanceButton">CALCULATE TOLD</button>
+            </div>
           </div>
-          <div class="performance-grid">
-            <article class="panel form-panel">
-              <div class="panel-heading"><div><span class="eyebrow">CONDITIONS</span><h2>Runway environment</h2></div></div>
-              <div class="form-grid cols-3">
-                <label><span>Airport elevation ft</span><input id="perfElevation" type="number" step="1"></label>
-                <label><span>Altimeter inHg</span><input id="perfAltimeter" type="number" step="0.01" value="29.92"></label>
-                <label><span>Temperature °C</span><input id="perfTemperature" type="number" step="1"></label>
-                <label><span>Runway heading</span><input id="perfRunwayHeading" type="number" min="1" max="360" step="1"></label>
-                <label><span>Wind from</span><input id="perfWindDirection" type="number" min="0" max="360" step="1"></label>
-                <label><span>Wind speed kt</span><input id="perfWindSpeed" type="number" min="0" step="1"></label>
-                <label><span>Runway length ft</span><input id="perfRunwayLength" type="number" min="0" step="1"></label>
-                <label><span>Surface</span><select id="perfSurface"><option value="paved">Paved, dry</option><option value="wet">Paved, wet</option><option value="grass">Grass</option><option value="soft">Soft field</option></select></label>
-                <label><span>Safety factor %</span><input id="perfSafetyFactor" type="number" min="0" step="5" value="50"></label>
+
+          <div class="told-phase-grid">
+            <article class="panel told-phase-panel">
+              <div class="panel-heading"><div><span class="eyebrow">TAKEOFF</span><h2>Departure conditions</h2></div><span class="phase-status neutral" id="toldToStatus">NOT CALCULATED</span></div>
+              <div class="form-grid cols-4 told-form-grid">
+                <label><span>Airport</span><input id="toldToAirport" class="icao-input" maxlength="5" placeholder="KIND"></label>
+                <label><span>Runway</span><input id="toldToRunway" placeholder="05L"></label>
+                <label><span>Configuration</span><select id="toldToConfig"></select></label>
+                <label><span>Takeoff weight</span><input id="toldToWeight" type="number" step="0.1" inputmode="decimal"></label>
+                <label><span>Field elevation ft</span><input id="toldToElevation" type="number" step="1" inputmode="numeric"></label>
+                <label><span>Altimeter inHg</span><input id="toldToAltimeter" type="number" step="0.01" inputmode="decimal" value="29.92"></label>
+                <label><span>Temperature °C</span><input id="toldToTemp" type="number" step="1" inputmode="numeric"></label>
+                <label><span>Runway heading °M</span><input id="toldToHeading" type="number" min="1" max="360" step="1" inputmode="numeric"></label>
+                <label><span>Wind from °M</span><input id="toldToWindDir" type="number" min="0" max="360" step="1" inputmode="numeric"></label>
+                <label><span>Wind speed kt</span><input id="toldToWindSpeed" type="number" min="0" step="1" inputmode="numeric"></label>
+                <label><span>Wind gust kt</span><input id="toldToWindGust" type="number" min="0" step="1" inputmode="numeric"></label>
+                <label><span>Runway slope %</span><input id="toldToSlope" type="number" step="0.1" inputmode="decimal" value="0"></label>
+                <label><span>TORA ft</span><input id="toldToTora" type="number" min="0" step="1" inputmode="numeric"></label>
+                <label><span>TODA ft</span><input id="toldToToda" type="number" min="0" step="1" inputmode="numeric"></label>
+                <label><span>ASDA ft</span><input id="toldToAsda" type="number" min="0" step="1" inputmode="numeric"></label>
+                <label><span>Runway condition</span><select id="toldToSurface"><option value="dry">Dry paved</option><option value="wet">Wet paved</option><option value="grass">Grass</option><option value="soft">Soft / unprepared</option><option value="contaminated">Contaminated</option></select></label>
+                <label><span>Planning factor %</span><input id="toldToSafety" type="number" min="0" step="5" inputmode="numeric" value="50"></label>
+                <label class="span-3"><span>Takeoff notes / MEL / technique</span><input id="toldToNotes" placeholder="Normal takeoff, flaps, anti-ice, obstacle notes"></label>
               </div>
-              <div class="button-grid"><button class="primary-button" id="calculatePerformanceButton">CALCULATE FROM PROFILE</button><button class="secondary-button" id="copyPerformanceButton">COPY WORKSHEET</button></div>
+              <div class="told-atmosphere-strip">
+                <div><span>PA</span><strong id="toldToPa">—</strong><small>FT</small></div>
+                <div><span>DA</span><strong id="toldToDa">—</strong><small>FT</small></div>
+                <div><span>H/W</span><strong id="toldToHeadwind">—</strong><small>KT</small></div>
+                <div><span>X/W</span><strong id="toldToCrosswind">—</strong><small>KT</small></div>
+              </div>
             </article>
-            <article class="panel">
-              <div class="panel-heading"><div><span class="eyebrow">ATMOSPHERE</span><h2>Calculated conditions</h2></div></div>
-              <div class="metric-cards">
-                <div><span>PRESS ALT</span><strong id="perfPressureAltitude">—</strong><small>FT</small></div>
-                <div><span>DENS ALT</span><strong id="perfDensityAltitude">—</strong><small>FT</small></div>
-                <div><span>HEADWIND</span><strong id="perfHeadwind">—</strong><small>KT</small></div>
-                <div><span>CROSSWIND</span><strong id="perfCrosswind">—</strong><small>KT</small></div>
+
+            <article class="panel told-phase-panel">
+              <div class="panel-heading"><div><span class="eyebrow">LANDING</span><h2>Arrival conditions</h2></div><span class="phase-status neutral" id="toldLdStatus">NOT CALCULATED</span></div>
+              <div class="form-grid cols-4 told-form-grid">
+                <label><span>Airport</span><input id="toldLdAirport" class="icao-input" maxlength="5" placeholder="KUMP"></label>
+                <label><span>Runway</span><input id="toldLdRunway" placeholder="15"></label>
+                <label><span>Configuration</span><select id="toldLdConfig"></select></label>
+                <label><span>Landing weight</span><input id="toldLdWeight" type="number" step="0.1" inputmode="decimal"></label>
+                <label><span>Field elevation ft</span><input id="toldLdElevation" type="number" step="1" inputmode="numeric"></label>
+                <label><span>Altimeter inHg</span><input id="toldLdAltimeter" type="number" step="0.01" inputmode="decimal" value="29.92"></label>
+                <label><span>Temperature °C</span><input id="toldLdTemp" type="number" step="1" inputmode="numeric"></label>
+                <label><span>Runway heading °M</span><input id="toldLdHeading" type="number" min="1" max="360" step="1" inputmode="numeric"></label>
+                <label><span>Wind from °M</span><input id="toldLdWindDir" type="number" min="0" max="360" step="1" inputmode="numeric"></label>
+                <label><span>Wind speed kt</span><input id="toldLdWindSpeed" type="number" min="0" step="1" inputmode="numeric"></label>
+                <label><span>Wind gust kt</span><input id="toldLdWindGust" type="number" min="0" step="1" inputmode="numeric"></label>
+                <label><span>Runway slope %</span><input id="toldLdSlope" type="number" step="0.1" inputmode="decimal" value="0"></label>
+                <label><span>LDA ft</span><input id="toldLdLda" type="number" min="0" step="1" inputmode="numeric"></label>
+                <label><span>Runway condition</span><select id="toldLdSurface"><option value="dry">Dry paved</option><option value="wet">Wet paved</option><option value="grass">Grass</option><option value="soft">Soft / unprepared</option><option value="contaminated">Contaminated</option></select></label>
+                <label><span>Planning factor %</span><input id="toldLdSafety" type="number" min="0" step="5" inputmode="numeric" value="50"></label>
+                <label class="span-1"><span>Autobrake / technique</span><input id="toldLdTechnique" placeholder="Manual braking / normal"></label>
+                <label class="span-4"><span>Landing notes / MEL / approach additives</span><input id="toldLdNotes" placeholder="Flaps, approach additive, braking action, threshold notes"></label>
               </div>
-              <div id="performanceResults" class="data-list"></div>
+              <div class="told-atmosphere-strip">
+                <div><span>PA</span><strong id="toldLdPa">—</strong><small>FT</small></div>
+                <div><span>DA</span><strong id="toldLdDa">—</strong><small>FT</small></div>
+                <div><span>H/W</span><strong id="toldLdHeadwind">—</strong><small>KT</small></div>
+                <div><span>X/W</span><strong id="toldLdCrosswind">—</strong><small>KT</small></div>
+              </div>
             </article>
           </div>
-          <article class="panel">
-            <div class="panel-heading"><div><span class="eyebrow">MODEL TRANSPARENCY</span><h2>How performance is derived</h2></div></div>
-            <p class="body-copy">The app interpolates only among points you enter from the aircraft’s approved POH/AFM tables, then applies the profile’s configured surface and wind corrections and your safety factor. It does not invent missing performance data and refuses a green result when the profile is unverified.</p>
+
+          <article class="panel told-report" id="toldReport">
+            <div class="told-report-header">
+              <div><span class="eyebrow">GENERATED TOLD REPORT</span><h2 id="toldReportTitle">No report calculated</h2><p id="toldReportMeta">Select a verified aircraft profile and enter runway conditions.</p></div>
+              <div class="toolbar-actions no-print"><button class="secondary-button compact" id="copyPerformanceButton">COPY</button><button class="secondary-button compact" id="downloadToldButton">DOWNLOAD</button><button class="secondary-button compact" id="shareToldButton">SHARE</button><button class="primary-button compact" id="printToldButton">PRINT TOLD</button></div>
+            </div>
+            <div class="table-wrap told-table-wrap">
+              <table class="data-table told-table">
+                <thead><tr><th>Phase</th><th>Runway / config</th><th>Weight</th><th>PA / DA</th><th>Wind</th><th>Speeds</th><th>Required</th><th>Available</th><th>Margin</th><th>Status</th></tr></thead>
+                <tbody id="toldReportBody"><tr><td colspan="10" class="empty-table-cell">No TOLD result.</td></tr></tbody>
+              </table>
+            </div>
+            <div id="performanceResults" class="data-list told-issues"></div>
+            <div class="told-signoff-grid">
+              <label><span>Prepared by</span><input id="toldPreparedBy" placeholder="Pilot / dispatcher"></label>
+              <label><span>Report notes</span><input id="toldReportNotes" placeholder="Operational notes retained with this flight"></label>
+              <div class="told-hash"><span>REPORT ID</span><strong id="toldReportId">—</strong></div>
+            </div>
+            <div class="notice warning"><strong>Performance-data limitation</strong><span>Results are produced only from the active profile’s entered POH/AFM data. Out-of-range conditions are rejected rather than extrapolated. Verify runway declared distances, conditions, configuration, aircraft status and all results against the current approved source.</span></div>
           </article>
         </section>
 
@@ -270,7 +326,7 @@
 
               <article class="panel">
                 <div class="panel-heading"><div><span class="eyebrow">PERFORMANCE TABLES</span><h2>POH / AFM data points</h2></div></div>
-                <div class="subtabs"><button class="active" data-perf-editor="takeoff">TAKEOFF</button><button data-perf-editor="landing">LANDING</button><button data-perf-editor="cruise">CRUISE</button><button data-perf-editor="corrections">CORRECTIONS</button></div>
+                <div class="subtabs"><button class="active" data-perf-editor="told">TOLD SETUP</button><button data-perf-editor="takeoff">TAKEOFF DATA</button><button data-perf-editor="landing">LANDING DATA</button><button data-perf-editor="cruise">CRUISE</button><button data-perf-editor="corrections">CORRECTIONS</button></div>
                 <div id="performanceEditor"></div>
               </article>
 

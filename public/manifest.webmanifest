@@ -1,14 +1,22 @@
 {
   "name": "AeroBrief Flight Operations",
   "short_name": "AeroBrief",
-  "description": "iPad-first supplemental real-world flight planning, weight and balance, performance, risk and briefing app.",
+  "description": "iPad and iPhone supplemental real-world flight planning, aircraft profiles, W&B, TOLD performance and FAA/NWS briefing app.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#071017",
   "theme_color": "#071017",
   "orientation": "any",
   "icons": [
-    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
   ]
 }

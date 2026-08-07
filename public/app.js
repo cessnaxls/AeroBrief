@@ -7,14 +7,15 @@ const STORAGE = {
   flights: 'aerobrief.rw.flights.v2',
   settings: 'aerobrief.rw.settings.v2',
   acknowledged: 'aerobrief.rw.ack.v2',
-  checklist: 'aerobrief.rw.checklist.v2'
+  checklist: 'aerobrief.rw.checklist.v2',
+  navigation: 'aerobrief.rw.navigation.v1'
 };
 
 const viewMeta = {
   plan: ['FLIGHT PLANNING', 'Build and validate a flight'],
   brief: ['AUTHORITATIVE BRIEFING', 'Weather, hazards, TFR and NOTAM gate'],
   wb: ['WEIGHT & BALANCE', 'Aircraft-specific loading'],
-  performance: ['PERFORMANCE', 'POH / AFM worksheet'],
+  performance: ['TOLD PERFORMANCE', 'Takeoff and landing data report'],
   aircraft: ['AIRCRAFT PROFILES', 'Aircraft, W&B and performance configuration'],
   checklists: ['CHECKLISTS', 'Aircraft-specific procedures'],
   flights: ['FLIGHT RECORDS', 'Saved flights and briefing snapshots'],
@@ -74,7 +75,26 @@ function blankProfile(name = 'New aircraft — enter verified data') {
       takeoff: [],
       landing: [],
       cruise: [],
-      corrections: { grassPct: 0, wetPct: 0, softPct: 0, headwindPctPerKt: 0, tailwindPctPerKt: 0 }
+      told: {
+        verified: false,
+        source: '',
+        obstacleHeight: 50,
+        takeoffSpeedLabels: ['V1', 'VR', 'V2'],
+        landingSpeedLabels: ['VREF', 'VAPP'],
+        defaultTakeoffConfig: 'NORMAL',
+        defaultLandingConfig: 'NORMAL',
+        windUse: 'steady',
+        takeoffSafetyFactor: 50,
+        landingSafetyFactor: 50
+      },
+      corrections: {
+        toGrassPct: 0, toWetPct: 0, toSoftPct: 0, toContaminatedPct: 0,
+        ldGrassPct: 0, ldWetPct: 0, ldSoftPct: 0, ldContaminatedPct: 0,
+        toHeadwindPctPerKt: 0, toTailwindPctPerKt: 0,
+        ldHeadwindPctPerKt: 0, ldTailwindPctPerKt: 0,
+        toUpslopePctPerPct: 0, toDownslopePctPerPct: 0,
+        ldUpslopePctPerPct: 0, ldDownslopePctPerPct: 0
+      }
     },
     checklists: structuredCloneSafe(DEFAULT_CHECKLISTS),
     updatedAt: new Date().toISOString()
@@ -87,7 +107,7 @@ let state = {
   activeProfileId: '',
   editorProfileId: '',
   editorDraft: null,
-  perfEditorTab: 'takeoff',
+  perfEditorTab: 'told',
   airports: {},
   weather: { metars: [], tafs: [] },
   hazards: { sigmets: [], gairmets: [], pireps: [] },
@@ -108,7 +128,12 @@ function structuredCloneSafe(value) {
 }
 
 function safeParse(value, fallback) {
-  try { return JSON.parse(value); } catch { return fallback; }
+  try {
+    const parsed = JSON.parse(value);
+    return parsed ?? fallback;
+  } catch {
+    return fallback;
+  }
 }
 
 function number(value, fallback = 0) {
@@ -175,6 +200,18 @@ function loadProfiles() {
   return [profile];
 }
 
+function normalizePerformanceRow(row, phase) {
+  const common = {
+    config: String(row?.config || 'NORMAL').trim() || 'NORMAL',
+    pa: number(row?.pa), temp: number(row?.temp), weight: number(row?.weight),
+    groundRoll: optionalNumber(row?.groundRoll), over50: optionalNumber(row?.over50),
+    speed1: optionalNumber(row?.speed1), speed2: optionalNumber(row?.speed2),
+    limitWeight: optionalNumber(row?.limitWeight)
+  };
+  if (phase === 'takeoff') return { ...common, accelerateStop: optionalNumber(row?.accelerateStop), speed3: optionalNumber(row?.speed3) };
+  return common;
+}
+
 function normalizeProfile(profile) {
   const blank = blankProfile(profile?.name || 'Aircraft profile');
   return {
@@ -185,12 +222,34 @@ function normalizeProfile(profile) {
     defaults: { ...blank.defaults, ...(profile?.defaults || {}) },
     stations: Array.isArray(profile?.stations) ? profile.stations.map(s => ({ id: s.id || uid(), name: s.name || 'Station', type: s.type || 'other', arm: number(s.arm), max: number(s.max), defaultValue: number(s.defaultValue) })) : blank.stations,
     envelope: Array.isArray(profile?.envelope) ? profile.envelope.map(p => ({ weight: number(p.weight), forward: number(p.forward), aft: number(p.aft) })).sort((a,b) => a.weight - b.weight) : [],
-    performance: {
-      takeoff: Array.isArray(profile?.performance?.takeoff) ? profile.performance.takeoff : [],
-      landing: Array.isArray(profile?.performance?.landing) ? profile.performance.landing : [],
-      cruise: Array.isArray(profile?.performance?.cruise) ? profile.performance.cruise : [],
-      corrections: { ...blank.performance.corrections, ...(profile?.performance?.corrections || {}) }
-    },
+    performance: (() => {
+      const legacy = profile?.performance?.corrections || {};
+      const migrated = {
+        toGrassPct: legacy.toGrassPct ?? legacy.grassPct ?? 0,
+        toWetPct: legacy.toWetPct ?? legacy.wetPct ?? 0,
+        toSoftPct: legacy.toSoftPct ?? legacy.softPct ?? 0,
+        toContaminatedPct: legacy.toContaminatedPct ?? 0,
+        ldGrassPct: legacy.ldGrassPct ?? legacy.grassPct ?? 0,
+        ldWetPct: legacy.ldWetPct ?? legacy.wetPct ?? 0,
+        ldSoftPct: legacy.ldSoftPct ?? legacy.softPct ?? 0,
+        ldContaminatedPct: legacy.ldContaminatedPct ?? 0,
+        toHeadwindPctPerKt: legacy.toHeadwindPctPerKt ?? legacy.headwindPctPerKt ?? 0,
+        toTailwindPctPerKt: legacy.toTailwindPctPerKt ?? legacy.tailwindPctPerKt ?? 0,
+        ldHeadwindPctPerKt: legacy.ldHeadwindPctPerKt ?? legacy.headwindPctPerKt ?? 0,
+        ldTailwindPctPerKt: legacy.ldTailwindPctPerKt ?? legacy.tailwindPctPerKt ?? 0,
+        toUpslopePctPerPct: legacy.toUpslopePctPerPct ?? 0,
+        toDownslopePctPerPct: legacy.toDownslopePctPerPct ?? 0,
+        ldUpslopePctPerPct: legacy.ldUpslopePctPerPct ?? 0,
+        ldDownslopePctPerPct: legacy.ldDownslopePctPerPct ?? 0
+      };
+      return {
+        takeoff: Array.isArray(profile?.performance?.takeoff) ? profile.performance.takeoff.map(r => normalizePerformanceRow(r, 'takeoff')) : [],
+        landing: Array.isArray(profile?.performance?.landing) ? profile.performance.landing.map(r => normalizePerformanceRow(r, 'landing')) : [],
+        cruise: Array.isArray(profile?.performance?.cruise) ? profile.performance.cruise : [],
+        told: { ...blank.performance.told, ...(profile?.performance?.told || {}) },
+        corrections: { ...blank.performance.corrections, ...migrated }
+      };
+    })(),
     checklists: Array.isArray(profile?.checklists) ? profile.checklists : structuredCloneSafe(DEFAULT_CHECKLISTS)
   };
 }
@@ -233,6 +292,7 @@ function defaultFlight() {
     extraFuel: 0,
     load: Object.fromEntries(profile.stations.map(s => [s.id, s.defaultValue || 0])),
     officialNotamCheck: null,
+    told: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
@@ -337,6 +397,8 @@ function applyFlight(flight) {
   $('#contingencyPercent').value = state.flight.contingencyPercent ?? 10;
   $('#extraFuel').value = state.flight.extraFuel ?? 0;
   $('#officialBriefReference').value = state.flight.officialNotamCheck?.reference || '';
+  state.performance = state.flight.told || null;
+  if (state.performance) applyToldInputs(state.performance);
   recalculate();
 }
 
@@ -366,10 +428,12 @@ function recalculate() {
   state.activeProfileId = state.flight.activeProfileId;
   state.calculations = calculatePlan(state.flight);
   state.wb = calculateWeightBalance();
+  updateToldStaleness();
   persistActive();
   renderTop();
   renderPlan();
   renderWeightBalance();
+  renderPerformance();
   renderCompleteness();
 }
 
@@ -819,9 +883,13 @@ function densityAltitude(pa, tempC) {
   return pa + 120 * (tempC - isa);
 }
 
-function idwInterpolate(rows, input, outputs) {
-  const clean = rows.filter(row => ['pa','temp','weight'].every(k => Number.isFinite(Number(row[k]))) && outputs.every(k => Number.isFinite(Number(row[k]))));
+function idwInterpolate(rows, input, output) {
+  const clean = rows.filter(row => ['pa','temp','weight'].every(k => Number.isFinite(Number(row[k]))) && Number.isFinite(Number(row[output])));
   if (!clean.length) return null;
+  for (const key of ['pa','temp','weight']) {
+    const values = clean.map(row => Number(row[key]));
+    if (input[key] < Math.min(...values) || input[key] > Math.max(...values)) return null;
+  }
   const ranges = {};
   for (const key of ['pa','temp','weight']) {
     const vals = clean.map(r => Number(r[key]));
@@ -831,79 +899,400 @@ function idwInterpolate(rows, input, outputs) {
     const distance = Math.sqrt(['pa','temp','weight'].reduce((sum,key) => sum + ((Number(row[key]) - input[key]) / ranges[key]) ** 2, 0));
     return { row, distance };
   }).sort((a,b) => a.distance - b.distance).slice(0, Math.min(8, clean.length));
-  if (ranked[0].distance < 1e-9) return Object.fromEntries(outputs.map(k => [k, Number(ranked[0].row[k])]));
+  if (ranked[0].distance < 1e-9) return Number(ranked[0].row[output]);
   const weights = ranked.map(r => 1 / (r.distance ** 2 + 1e-6));
   const denom = weights.reduce((a,b)=>a+b,0);
-  return Object.fromEntries(outputs.map(key => [key, ranked.reduce((sum,r,i) => sum + Number(r.row[key]) * weights[i],0) / denom]));
+  return ranked.reduce((sum,r,i) => sum + Number(r.row[output]) * weights[i],0) / denom;
+}
+
+function performanceRowsForConfig(rows, config) {
+  const requested = String(config || '').trim().toUpperCase();
+  const normalized = (rows || []).filter(row => row && Number.isFinite(Number(row.pa)) && Number.isFinite(Number(row.temp)) && Number.isFinite(Number(row.weight)));
+  if (!requested) return normalized;
+  return normalized.filter(row => String(row.config || 'NORMAL').trim().toUpperCase() === requested);
+}
+
+function performanceBounds(rows) {
+  if (!rows.length) return null;
+  const result = {};
+  for (const key of ['pa','temp','weight']) {
+    const values = rows.map(row => Number(row[key])).filter(Number.isFinite);
+    result[key] = { min: Math.min(...values), max: Math.max(...values) };
+  }
+  return result;
+}
+
+function interpolatePerformance(rows, config, input, outputs) {
+  const subset = performanceRowsForConfig(rows, config);
+  const bounds = performanceBounds(subset);
+  if (!bounds) return { values: null, bounds: null, inRange: false, reason: `No data rows exist for configuration ${config || '—'}.`, rowCount: 0 };
+  const outside = Object.entries(bounds).filter(([key,range]) => input[key] < range.min || input[key] > range.max);
+  if (outside.length) {
+    return {
+      values: null, bounds, inRange: false, rowCount: subset.length,
+      reason: `Outside entered table range: ${outside.map(([key,r]) => `${key.toUpperCase()} ${formatNumber(r.min,0)}–${formatNumber(r.max,0)}`).join(' · ')}`
+    };
+  }
+  const values = Object.fromEntries(outputs.map(output => [output, idwInterpolate(subset, input, output)]));
+  if (!Number.isFinite(values.groundRoll) || !Number.isFinite(values.over50)) {
+    return { values: null, bounds, inRange: true, rowCount: subset.length, reason: 'Ground-roll and obstacle-distance values are required in the selected table.' };
+  }
+  return { values, bounds, inRange: true, rowCount: subset.length, reason: '' };
+}
+
+function toldConfigValues(phase) {
+  const rows = activeProfile()?.performance?.[phase] || [];
+  return [...new Set(rows.map(row => String(row.config || 'NORMAL').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+}
+
+function renderToldConfigOptions() {
+  const profile = activeProfile();
+  const told = profile?.performance?.told || {};
+  for (const phase of ['takeoff','landing']) {
+    const select = phase === 'takeoff' ? $('#toldToConfig') : $('#toldLdConfig');
+    const prior = select.value;
+    const configs = toldConfigValues(phase);
+    const fallback = phase === 'takeoff' ? told.defaultTakeoffConfig : told.defaultLandingConfig;
+    if (!configs.length && fallback) configs.push(fallback);
+    select.innerHTML = configs.length ? configs.map(value => `<option value="${esc(value)}">${esc(value)}</option>`).join('') : '<option value="">NO CONFIGURED DATA</option>';
+    select.value = configs.includes(prior) ? prior : configs.includes(fallback) ? fallback : configs[0] || '';
+  }
+}
+
+function metarPerformanceValues(id) {
+  const metar = metarFor(id);
+  if (!metar) return {};
+  let altimeter = optionalNumber(metar.altim ?? metar.altimeter);
+  if (Number.isFinite(altimeter) && altimeter > 100) altimeter /= 33.8638867;
+  return {
+    altimeter,
+    temp: optionalNumber(metar.temp ?? metar.temperature),
+    windDir: optionalNumber(metar.wdir ?? metar.windDir),
+    windSpeed: optionalNumber(metar.wspd ?? metar.windSpeed),
+    windGust: optionalNumber(metar.wgst ?? metar.windGust)
+  };
+}
+
+function setToldValue(id, value, force = false) {
+  const element = $(`#${id}`);
+  if (!element || value == null || value === '' || !Number.isFinite(Number(value)) && typeof value === 'number') return;
+  if (force || element.value === '') element.value = value;
+}
+
+function syncToldInputs(force = false, announce = force) {
+  const profile = activeProfile();
+  renderToldConfigOptions();
+  const toAirport = state.flight.origin || '';
+  const ldAirport = state.flight.destination || '';
+  if (force || !$('#toldToAirport').value) $('#toldToAirport').value = toAirport;
+  if (force || !$('#toldLdAirport').value) $('#toldLdAirport').value = ldAirport;
+  const toWx = metarPerformanceValues(toAirport);
+  const ldWx = metarPerformanceValues(ldAirport);
+  const toWeight = state.wb?.phases?.takeoff?.weight;
+  const ldWeight = state.wb?.phases?.landing?.weight;
+  setToldValue('toldToWeight', toWeight, force);
+  setToldValue('toldLdWeight', ldWeight, force);
+  setToldValue('toldToElevation', airportElev(airportFor(toAirport)), force);
+  setToldValue('toldLdElevation', airportElev(airportFor(ldAirport)), force);
+  setToldValue('toldToAltimeter', toWx.altimeter, force);
+  setToldValue('toldLdAltimeter', ldWx.altimeter, force);
+  setToldValue('toldToTemp', toWx.temp, force);
+  setToldValue('toldLdTemp', ldWx.temp, force);
+  setToldValue('toldToWindDir', toWx.windDir ?? state.flight.windDirection, force);
+  setToldValue('toldLdWindDir', ldWx.windDir ?? state.flight.windDirection, force);
+  setToldValue('toldToWindSpeed', toWx.windSpeed ?? state.flight.windSpeed, force);
+  setToldValue('toldLdWindSpeed', ldWx.windSpeed ?? state.flight.windSpeed, force);
+  setToldValue('toldToWindGust', toWx.windGust, force);
+  setToldValue('toldLdWindGust', ldWx.windGust, force);
+  setToldValue('toldToSafety', profile?.performance?.told?.takeoffSafetyFactor ?? 50, force);
+  setToldValue('toldLdSafety', profile?.performance?.told?.landingSafetyFactor ?? 50, force);
+  if (announce) toast('Route, W&B and available METAR values synced');
+}
+
+function applyToldInputs(perf) {
+  if (!perf?.takeoff || !perf?.landing) return;
+  renderToldConfigOptions();
+  const apply = (prefix,result) => {
+    const values = {
+      Airport: result.airport, Runway: result.runway, Config: result.config, Weight: result.weight,
+      Elevation: result.elevation, Altimeter: result.altimeter, Temp: result.temp, Heading: result.heading,
+      WindDir: result.windDir, WindSpeed: result.windSpeed, WindGust: result.windGust,
+      Slope: result.slope, Surface: result.surface, Safety: result.safetyFactor, Notes: result.notes
+    };
+    for (const [suffix,value] of Object.entries(values)) {
+      const element = $(`#${prefix}${suffix}`);
+      if (element && value != null) element.value = value;
+    }
+  };
+  apply('toldTo',perf.takeoff);
+  apply('toldLd',perf.landing);
+  $('#toldToTora').value=perf.takeoff.tora || '';
+  $('#toldToToda').value=perf.takeoff.toda || '';
+  $('#toldToAsda').value=perf.takeoff.asda || '';
+  $('#toldLdLda').value=perf.landing.lda || '';
+  $('#toldLdTechnique').value=perf.landing.technique || '';
+  $('#toldPreparedBy').value=perf.preparedBy || '';
+  $('#toldReportNotes').value=perf.reportNotes || '';
+}
+
+function updateToldStaleness() {
+  if (!state.performance) return;
+  const toWeight = state.wb?.phases?.takeoff?.weight || 0;
+  const ldWeight = state.wb?.phases?.landing?.weight || 0;
+  state.performance.stale = state.performance.profileId !== activeProfile()?.id
+    || state.performance.takeoff?.airport !== state.flight.origin
+    || state.performance.landing?.airport !== state.flight.destination
+    || Math.abs(number(state.performance.takeoff?.weight) - toWeight) > .1
+    || Math.abs(number(state.performance.landing?.weight) - ldWeight) > .1;
+}
+
+function collectToldPhase(prefix, phase) {
+  const takeoff = phase === 'takeoff';
+  return {
+    phase,
+    airport: $(`#${prefix}Airport`).value.trim().toUpperCase(),
+    runway: $(`#${prefix}Runway`).value.trim().toUpperCase(),
+    config: $(`#${prefix}Config`).value,
+    weight: number($(`#${prefix}Weight`).value),
+    elevation: number($(`#${prefix}Elevation`).value),
+    altimeter: number($(`#${prefix}Altimeter`).value, 29.92),
+    temp: number($(`#${prefix}Temp`).value, 15),
+    heading: number($(`#${prefix}Heading`).value),
+    windDir: number($(`#${prefix}WindDir`).value),
+    windSpeed: number($(`#${prefix}WindSpeed`).value),
+    windGust: number($(`#${prefix}WindGust`).value),
+    slope: number($(`#${prefix}Slope`).value),
+    surface: $(`#${prefix}Surface`).value,
+    safetyFactor: number($(`#${prefix}Safety`).value),
+    notes: $(`#${prefix}Notes`).value.trim(),
+    technique: takeoff ? '' : $('#toldLdTechnique').value.trim(),
+    tora: takeoff ? number($('#toldToTora').value) : 0,
+    toda: takeoff ? number($('#toldToToda').value) : 0,
+    asda: takeoff ? number($('#toldToAsda').value) : 0,
+    lda: takeoff ? 0 : number($('#toldLdLda').value)
+  };
+}
+
+function phaseCorrectionPercent(phase, input, headwind, corrections) {
+  const lead = phase === 'takeoff' ? 'to' : 'ld';
+  const surfaceMap = { grass: 'GrassPct', wet: 'WetPct', soft: 'SoftPct', contaminated: 'ContaminatedPct' };
+  const surfaceKey = surfaceMap[input.surface];
+  const surfacePct = surfaceKey ? number(corrections[`${lead}${surfaceKey}`]) : 0;
+  const windPct = headwind >= 0
+    ? -headwind * number(corrections[`${lead}HeadwindPctPerKt`])
+    : Math.abs(headwind) * number(corrections[`${lead}TailwindPctPerKt`]);
+  let slopePct = 0;
+  if (phase === 'takeoff') {
+    slopePct = input.slope >= 0 ? input.slope * number(corrections.toUpslopePctPerPct) : -Math.abs(input.slope) * number(corrections.toDownslopePctPerPct);
+  } else {
+    slopePct = input.slope >= 0 ? -input.slope * number(corrections.ldUpslopePctPerPct) : Math.abs(input.slope) * number(corrections.ldDownslopePctPerPct);
+  }
+  return { surfacePct, windPct, slopePct, totalPct: surfacePct + windPct + slopePct };
+}
+
+function calculateToldPhase(input, profile) {
+  const toldSetup = profile?.performance?.told || {};
+  const pa = pressureAltitude(input.elevation, input.altimeter);
+  const da = densityAltitude(pa, input.temp);
+  const windForPerformance = toldSetup.windUse === 'gust' && input.windGust > input.windSpeed ? input.windGust : input.windSpeed;
+  const maxWind = Math.max(input.windSpeed, input.windGust || 0);
+  const angle = input.heading ? angularDifference(input.windDir, input.heading) * Math.PI / 180 : 0;
+  const headwind = input.heading ? windForPerformance * Math.cos(angle) : 0;
+  const crosswind = input.heading ? Math.abs(maxWind * Math.sin(angle)) : 0;
+  const outputs = input.phase === 'takeoff'
+    ? ['groundRoll','over50','accelerateStop','speed1','speed2','speed3','limitWeight']
+    : ['groundRoll','over50','speed1','speed2','limitWeight'];
+  const interpolation = interpolatePerformance(profile?.performance?.[input.phase] || [], input.config, { pa, temp: input.temp, weight: input.weight }, outputs);
+  const issues = [];
+  if (!input.airport) issues.push({ level:'danger', text:'Airport identifier is required.' });
+  if (!input.runway) issues.push({ level:'warning', text:'Runway identifier is blank.' });
+  if (!(input.weight > 0)) issues.push({ level:'danger', text:'A valid phase weight is required.' });
+  if (!(input.heading > 0)) issues.push({ level:'danger', text:'Runway heading is required for wind components.' });
+  if (!interpolation.values) issues.push({ level:'danger', text: interpolation.reason });
+  if (input.surface !== 'dry') {
+    const lead = input.phase === 'takeoff' ? 'to' : 'ld';
+    const key = { wet:'WetPct', grass:'GrassPct', soft:'SoftPct', contaminated:'ContaminatedPct' }[input.surface];
+    if (key && !number(profile?.performance?.corrections?.[`${lead}${key}`])) issues.push({ level:'danger', text:`No ${input.surface} runway correction is configured for this phase.` });
+  }
+  if (headwind < 0) {
+    const key = input.phase === 'takeoff' ? 'toTailwindPctPerKt' : 'ldTailwindPctPerKt';
+    if (!number(profile?.performance?.corrections?.[key])) issues.push({ level:'danger', text:'A tailwind exists but no tailwind correction is configured.' });
+  }
+  if (Math.abs(input.slope) > .01) {
+    const key = input.phase === 'takeoff'
+      ? (input.slope > 0 ? 'toUpslopePctPerPct' : 'toDownslopePctPerPct')
+      : (input.slope > 0 ? 'ldUpslopePctPerPct' : 'ldDownslopePctPerPct');
+    if (!number(profile?.performance?.corrections?.[key])) issues.push({ level:'danger', text:'Runway slope is nonzero but the applicable slope correction is not configured.' });
+  }
+  const xwindLimit = profile?.limits?.maxCrosswind || loadSettings().maxCrosswind;
+  if (crosswind > xwindLimit) issues.push({ level:'danger', text:`Crosswind ${formatNumber(crosswind,1)} kt exceeds ${xwindLimit} kt.` });
+  if (interpolation.values?.limitWeight && input.weight > interpolation.values.limitWeight) issues.push({ level:'danger', text:`Weight exceeds interpolated performance limit ${Math.round(interpolation.values.limitWeight)}.` });
+  const correction = phaseCorrectionPercent(input.phase, input, headwind, profile?.performance?.corrections || {});
+  const correctionMultiplier = Math.max(.1, 1 + correction.totalPct / 100);
+  const planningMultiplier = 1 + input.safetyFactor / 100;
+  let distances = null;
+  let margins = {};
+  if (interpolation.values) {
+    const v = interpolation.values;
+    distances = {
+      baseGroundRoll: v.groundRoll,
+      baseOver50: v.over50,
+      baseAccelerateStop: v.accelerateStop,
+      correctedGroundRoll: v.groundRoll * correctionMultiplier,
+      correctedOver50: v.over50 * correctionMultiplier,
+      correctedAccelerateStop: Number.isFinite(v.accelerateStop) ? v.accelerateStop * correctionMultiplier : null,
+      plannedGroundRoll: v.groundRoll * correctionMultiplier * planningMultiplier,
+      plannedOver50: v.over50 * correctionMultiplier * planningMultiplier,
+      plannedAccelerateStop: Number.isFinite(v.accelerateStop) ? v.accelerateStop * correctionMultiplier * planningMultiplier : null
+    };
+    if (input.phase === 'takeoff') {
+      const tora = input.tora;
+      const toda = input.toda || tora;
+      const asda = input.asda || tora;
+      if (!(tora > 0)) issues.push({ level:'danger', text:'TORA is required.' });
+      margins.groundRoll = tora > 0 ? tora - distances.plannedGroundRoll : null;
+      margins.over50 = toda > 0 ? toda - distances.plannedOver50 : null;
+      margins.accelerateStop = Number.isFinite(distances.plannedAccelerateStop) && asda > 0 ? asda - distances.plannedAccelerateStop : null;
+    } else {
+      if (!(input.lda > 0)) issues.push({ level:'danger', text:'LDA is required.' });
+      margins.groundRoll = input.lda > 0 ? input.lda - distances.plannedGroundRoll : null;
+      margins.over50 = input.lda > 0 ? input.lda - distances.plannedOver50 : null;
+    }
+    for (const [name,margin] of Object.entries(margins)) {
+      if (Number.isFinite(margin) && margin < 0) issues.push({ level:'danger', text:`${name.replaceAll(/([A-Z])/g,' $1')} requirement exceeds available distance by ${Math.abs(Math.round(margin))} ft.` });
+    }
+  }
+  const hardFailure = issues.some(issue => issue.level === 'danger');
+  return {
+    ...input, pa, da, headwind, crosswind, windForPerformance, interpolation, correction, distances, margins,
+    speeds: interpolation.values ? { speed1: interpolation.values.speed1, speed2: interpolation.values.speed2, speed3: interpolation.values.speed3 } : {},
+    issues, status: hardFailure ? 'NO-GO' : issues.length ? 'CAUTION' : 'PASS'
+  };
+}
+
+function reportIdentifier() {
+  const stamp = new Date().toISOString().replace(/[-:TZ.]/g,'').slice(0,14);
+  return `AB-${stamp}-${Math.random().toString(36).slice(2,6).toUpperCase()}`;
 }
 
 function calculatePerformance() {
   const profile = activeProfile();
-  const elevation = number($('#perfElevation').value, airportElev(airportFor(state.flight.origin)) || 0);
-  const altimeter = number($('#perfAltimeter').value, 29.92);
-  const temp = number($('#perfTemperature').value, 15);
-  const runwayHeading = number($('#perfRunwayHeading').value, 0);
-  const windDir = number($('#perfWindDirection').value, state.flight.windDirection);
-  const windSpeed = number($('#perfWindSpeed').value, state.flight.windSpeed);
-  const runwayLength = number($('#perfRunwayLength').value, 0);
-  const safetyFactor = number($('#perfSafetyFactor').value, 50);
-  const pa = pressureAltitude(elevation, altimeter);
-  const da = densityAltitude(pa, temp);
-  const angle = angularDifference(windDir, runwayHeading) * Math.PI / 180;
-  const headwind = runwayHeading ? windSpeed * Math.cos(angle) : 0;
-  const crosswind = runwayHeading ? Math.abs(windSpeed * Math.sin(angle)) : 0;
-  const takeoffWeight = state.wb?.phases?.takeoff?.weight || 0;
-  const landingWeight = state.wb?.phases?.landing?.weight || takeoffWeight;
-  const takeoff = profile ? idwInterpolate(profile.performance.takeoff, { pa, temp, weight: takeoffWeight }, ['groundRoll','over50']) : null;
-  const landing = profile ? idwInterpolate(profile.performance.landing, { pa, temp, weight: landingWeight }, ['groundRoll','over50']) : null;
-  const corrections = profile?.performance?.corrections || {};
-  const surface = $('#perfSurface').value;
-  const surfacePct = surface === 'grass' ? number(corrections.grassPct) : surface === 'wet' ? number(corrections.wetPct) : surface === 'soft' ? number(corrections.softPct) : 0;
-  const windPct = headwind >= 0 ? -headwind * number(corrections.headwindPctPerKt) : Math.abs(headwind) * number(corrections.tailwindPctPerKt);
-  const correctionMultiplier = Math.max(.1, 1 + (surfacePct + windPct) / 100);
-  const safetyMultiplier = 1 + safetyFactor / 100;
-  const apply = result => result ? {
-    baseGroundRoll: result.groundRoll,
-    baseOver50: result.over50,
-    adjustedGroundRoll: result.groundRoll * correctionMultiplier,
-    adjustedOver50: result.over50 * correctionMultiplier,
-    plannedGroundRoll: result.groundRoll * correctionMultiplier * safetyMultiplier,
-    plannedOver50: result.over50 * correctionMultiplier * safetyMultiplier
-  } : null;
-  state.performance = { elevation, altimeter, temp, pa, da, runwayHeading, windDir, windSpeed, headwind, crosswind, runwayLength, safetyFactor, takeoff: apply(takeoff), landing: apply(landing), profileVerified: !!profile?.verified };
+  if (!profile) { toast('Select an aircraft profile'); return null; }
+  const takeoffInput = collectToldPhase('toldTo','takeoff');
+  const landingInput = collectToldPhase('toldLd','landing');
+  const takeoff = calculateToldPhase(takeoffInput, profile);
+  const landing = calculateToldPhase(landingInput, profile);
+  const profileReady = !!profile.verified;
+  const performanceReady = !!profile.performance?.told?.verified;
+  if (!profileReady) takeoff.issues.unshift({ level:'danger', text:'Aircraft profile is not verified against current records.' });
+  if (!profileReady) landing.issues.unshift({ level:'danger', text:'Aircraft profile is not verified against current records.' });
+  if (!performanceReady) takeoff.issues.unshift({ level:'danger', text:'TOLD performance data is not marked verified against the current POH/AFM.' });
+  if (!performanceReady) landing.issues.unshift({ level:'danger', text:'TOLD performance data is not marked verified against the current POH/AFM.' });
+  if (!profileReady || !performanceReady) { takeoff.status='NO-GO'; landing.status='NO-GO'; }
+  state.performance = {
+    reportId: reportIdentifier(), generatedAt: new Date().toISOString(), stale: false, profileId: profile.id, profileName: profile.name,
+    profileRevision: profile.revision, performanceSource: profile.performance?.told?.source || '', profileReady, performanceReady,
+    takeoff, landing, preparedBy: $('#toldPreparedBy').value.trim(), reportNotes: $('#toldReportNotes').value.trim()
+  };
+  state.flight = { ...state.flight, told: structuredCloneSafe(state.performance), updatedAt: new Date().toISOString() };
+  persistActive();
   renderPerformance();
+  toast('TOLD report calculated');
   return state.performance;
+}
+
+function toldSpeedText(result, labels) {
+  const values = [result?.speeds?.speed1, result?.speeds?.speed2, result?.speeds?.speed3];
+  return labels.map((label,index) => Number.isFinite(values[index]) ? `${label} ${Math.round(values[index])}` : '').filter(Boolean).join(' · ') || 'Not configured';
+}
+
+function toldRequiredText(result) {
+  if (!result?.distances) return 'Unavailable';
+  const obstacle = activeProfile()?.performance?.told?.obstacleHeight || 50;
+  const parts = [`GR ${Math.round(result.distances.plannedGroundRoll)} ft`, `OVER ${obstacle} ${Math.round(result.distances.plannedOver50)} ft`];
+  if (Number.isFinite(result.distances.plannedAccelerateStop)) parts.push(`ASD ${Math.round(result.distances.plannedAccelerateStop)} ft`);
+  return parts.join(' · ');
+}
+
+function toldAvailableText(result) {
+  return result.phase === 'takeoff'
+    ? `TORA ${result.tora || '—'} · TODA ${result.toda || result.tora || '—'} · ASDA ${result.asda || result.tora || '—'} ft`
+    : `LDA ${result.lda || '—'} ft`;
+}
+
+function toldMarginText(result) {
+  const margins = result?.margins || {};
+  const parts = [];
+  if (Number.isFinite(margins.groundRoll)) parts.push(`GR ${Math.round(margins.groundRoll)}`);
+  if (Number.isFinite(margins.over50)) parts.push(`OBS ${Math.round(margins.over50)}`);
+  if (Number.isFinite(margins.accelerateStop)) parts.push(`ASD ${Math.round(margins.accelerateStop)}`);
+  return parts.length ? `${parts.join(' · ')} ft` : '—';
+}
+
+function toldTableRow(result, label, speedLabels) {
+  const shownStatus = state.performance?.stale ? 'STALE' : result.status;
+  const statusClass = shownStatus === 'PASS' ? 'success' : shownStatus === 'CAUTION' ? 'warning' : 'danger';
+  const windType = activeProfile()?.performance?.told?.windUse === 'gust' ? 'gust' : 'steady';
+  return `<tr>
+    <td data-label="Phase"><span class="told-value">${esc(label)}</span><span class="told-subvalue">${esc(result.airport)} RWY ${esc(result.runway || '—')}</span></td>
+    <td data-label="Runway / config"><span class="told-value">${esc(result.config || '—')}</span><span class="told-subvalue">${esc(result.surface.toUpperCase())} · slope ${formatNumber(result.slope,1)}%</span></td>
+    <td data-label="Weight"><span class="told-value">${Math.round(result.weight || 0)}</span><span class="told-subvalue">${esc(activeProfile()?.units?.weight || '')}</span></td>
+    <td data-label="PA / DA"><span class="told-value">${Math.round(result.pa)} / ${Math.round(result.da)}</span><span class="told-subvalue">FT</span></td>
+    <td data-label="Wind"><span class="told-value">H ${formatNumber(result.headwind,1)} · X ${formatNumber(result.crosswind,1)}</span><span class="told-subvalue">KT · ${windType} correction</span></td>
+    <td data-label="Speeds"><span class="told-value">${esc(toldSpeedText(result,speedLabels))}</span><span class="told-subvalue">KT / profile labels</span></td>
+    <td data-label="Required"><span class="told-value">${esc(toldRequiredText(result))}</span><span class="told-subvalue">Includes ${result.safetyFactor}% planning factor</span></td>
+    <td data-label="Available"><span class="told-value">${esc(toldAvailableText(result))}</span></td>
+    <td data-label="Margin"><span class="told-value">${esc(toldMarginText(result))}</span></td>
+    <td data-label="Status" class="status-cell ${statusClass}">${esc(shownStatus)}</td>
+  </tr>`;
+}
+
+function renderPhaseStatus(id, result) {
+  const element = $(`#${id}`);
+  if (!result) { element.className='phase-status neutral'; element.textContent='NOT CALCULATED'; return; }
+  const level = result.status === 'PASS' ? 'success' : result.status === 'CAUTION' ? 'warning' : 'danger';
+  element.className=`phase-status ${level}`;
+  element.textContent=result.status;
 }
 
 function renderPerformance() {
   const perf = state.performance;
   const profile = activeProfile();
+  renderToldConfigOptions();
   const badge = $('#performanceBadge');
-  badge.className = `badge ${profile?.verified ? 'success' : 'warning'}`;
-  badge.textContent = profile?.verified ? 'PROFILE VERIFIED' : 'UNVERIFIED';
+  const ready = !!profile?.verified && !!profile?.performance?.told?.verified && !perf?.stale;
+  badge.className = `badge ${ready ? 'success' : 'warning'}`;
+  badge.textContent = perf?.stale ? 'RECALC REQUIRED' : ready ? 'AIRCRAFT + TOLD VERIFIED' : 'UNVERIFIED DATA';
+  renderPhaseStatus('toldToStatus',perf?.takeoff);
+  renderPhaseStatus('toldLdStatus',perf?.landing);
+  for (const [prefix,result] of [['toldTo',perf?.takeoff],['toldLd',perf?.landing]]) {
+    $(`#${prefix}Pa`).textContent = result ? Math.round(result.pa) : '—';
+    $(`#${prefix}Da`).textContent = result ? Math.round(result.da) : '—';
+    $(`#${prefix}Headwind`).textContent = result ? formatNumber(result.headwind,1) : '—';
+    $(`#${prefix}Crosswind`).textContent = result ? formatNumber(result.crosswind,1) : '—';
+  }
   if (!perf) {
-    ['perfPressureAltitude','perfDensityAltitude','perfHeadwind','perfCrosswind'].forEach(id => $(`#${id}`).textContent='—');
-    $('#performanceResults').innerHTML = '<div class="data-item"><strong>No calculation</strong><p>Enter conditions and calculate from the active aircraft profile.</p></div>';
+    $('#toldReportTitle').textContent='No report calculated';
+    $('#toldReportMeta').textContent='Select a verified aircraft profile and enter runway conditions.';
+    $('#toldReportBody').innerHTML='<tr><td colspan="10" class="empty-table-cell">No TOLD result.</td></tr>';
+    $('#performanceResults').innerHTML='<div class="data-item"><strong>Ready for inputs</strong><p>Use Sync Route / W&B, verify all runway and weather values, then calculate.</p></div>';
+    $('#toldReportId').textContent='—';
     return;
   }
-  $('#perfPressureAltitude').textContent = Math.round(perf.pa);
-  $('#perfDensityAltitude').textContent = Math.round(perf.da);
-  $('#perfHeadwind').textContent = formatNumber(perf.headwind,1);
-  $('#perfCrosswind').textContent = formatNumber(perf.crosswind,1);
-  const settings = loadSettings();
-  const items = [];
-  if (!profile?.verified) items.push({ level:'danger', title:'Profile is unverified', text:'Do not use these results operationally until the profile is checked against the current POH/AFM and aircraft records.' });
-  if (perf.da > settings.maxDensityAltitude) items.push({ level:'warning', title:'Density altitude threshold exceeded', text:`${Math.round(perf.da)} ft exceeds your configured ${settings.maxDensityAltitude} ft alert.` });
-  const xwindLimit = profile?.limits?.maxCrosswind || settings.maxCrosswind;
-  if (perf.crosswind > xwindLimit) items.push({ level:'danger', title:'Crosswind threshold exceeded', text:`${formatNumber(perf.crosswind,1)} kt exceeds ${xwindLimit} kt.` });
-  for (const [label,result] of [['Takeoff',perf.takeoff],['Landing',perf.landing]]) {
-    if (!result) items.push({ level:'danger', title:`${label} table unavailable`, text:'Enter enough POH/AFM table points around the planned pressure altitude, temperature and weight.' });
-    else {
-      const margin = perf.runwayLength > 0 ? perf.runwayLength - result.plannedOver50 : NaN;
-      items.push({ level: Number.isFinite(margin) && margin < 0 ? 'danger' : 'success', title:`${label} planned distance`, text:`Base over-50-ft ${Math.round(result.baseOver50)} ft · corrected ${Math.round(result.adjustedOver50)} ft · with safety factor ${Math.round(result.plannedOver50)} ft${Number.isFinite(margin) ? ` · runway margin ${Math.round(margin)} ft` : ''}.` });
-    }
-  }
-  $('#performanceResults').innerHTML = items.map(i => `<div class="data-item ${i.level}"><strong>${esc(i.title)}</strong><p>${esc(i.text)}</p></div>`).join('');
+  const toldSetup = profile?.performance?.told || {};
+  const toLabels = Array.isArray(toldSetup.takeoffSpeedLabels) ? toldSetup.takeoffSpeedLabels : ['V1','VR','V2'];
+  const ldLabels = Array.isArray(toldSetup.landingSpeedLabels) ? toldSetup.landingSpeedLabels : ['VREF','VAPP'];
+  $('#toldReportTitle').textContent=`${profile?.registration || profile?.name || 'Aircraft'} · ${perf.takeoff.airport}–${perf.landing.airport}`;
+  $('#toldReportMeta').textContent=`Generated ${formatDateTime(perf.generatedAt)} · Profile ${profile?.revision || 'revision not entered'} · Performance source ${perf.performanceSource || 'not entered'}${perf.stale ? ' · STALE—INPUTS OR W&B CHANGED' : ''}`;
+  $('#toldReportId').textContent=perf.reportId;
+  $('#toldReportBody').innerHTML=toldTableRow(perf.takeoff,'TAKEOFF',toLabels)+toldTableRow(perf.landing,'LANDING',ldLabels);
+  const issues = [
+    ...perf.takeoff.issues.map(issue => ({...issue,title:'Takeoff'})),
+    ...perf.landing.issues.map(issue => ({...issue,title:'Landing'}))
+  ];
+  if (perf.stale) issues.unshift({level:'danger',title:'Report stale',text:'Route, aircraft profile or W&B changed after this report was calculated. Sync and recalculate before use.'});
+  if (!issues.length) issues.push({level:'success',title:'Configured checks pass',text:'No exception was found within the entered profile rules and runway inputs. Final operational verification remains required.'});
+  $('#performanceResults').innerHTML=issues.map(issue => `<div class="data-item ${issue.level}"><strong>${esc(issue.title)}</strong><p>${esc(issue.text)}</p></div>`).join('');
 }
 
 function validateFlight() {
@@ -1002,12 +1391,17 @@ function collectCurrentPerformanceTable() {
   const tab = state.perfEditorTab;
   if (tab === 'takeoff' || tab === 'landing') {
     p.performance[tab] = $$('[data-performance-row]').map(row => ({
+      config: $('[data-key="config"]',row)?.value.trim() || 'NORMAL',
       pa: number($('[data-key="pa"]',row)?.value),
       temp: number($('[data-key="temp"]',row)?.value),
       weight: number($('[data-key="weight"]',row)?.value),
-      groundRoll: number($('[data-key="groundRoll"]',row)?.value),
-      over50: number($('[data-key="over50"]',row)?.value)
-    })).filter(r => Object.values(r).some(v => v !== 0));
+      groundRoll: optionalNumber($('[data-key="groundRoll"]',row)?.value),
+      over50: optionalNumber($('[data-key="over50"]',row)?.value),
+      ...(tab === 'takeoff' ? { accelerateStop: optionalNumber($('[data-key="accelerateStop"]',row)?.value), speed3: optionalNumber($('[data-key="speed3"]',row)?.value) } : {}),
+      speed1: optionalNumber($('[data-key="speed1"]',row)?.value),
+      speed2: optionalNumber($('[data-key="speed2"]',row)?.value),
+      limitWeight: optionalNumber($('[data-key="limitWeight"]',row)?.value)
+    })).filter(row => row.config || row.pa || row.temp || row.weight || row.groundRoll || row.over50);
   } else if (tab === 'cruise') {
     p.performance.cruise = $$('[data-performance-row]').map(row => ({
       altitude: number($('[data-key="altitude"]',row)?.value),
@@ -1015,11 +1409,27 @@ function collectCurrentPerformanceTable() {
       tas: number($('[data-key="tas"]',row)?.value),
       burn: number($('[data-key="burn"]',row)?.value)
     })).filter(r => Object.values(r).some(v => v !== 0));
-  } else if (tab === 'corrections') {
-    p.performance.corrections = {
-      grassPct: number($('#corrGrass')?.value), wetPct: number($('#corrWet')?.value), softPct: number($('#corrSoft')?.value),
-      headwindPctPerKt: number($('#corrHeadwind')?.value), tailwindPctPerKt: number($('#corrTailwind')?.value)
+  } else if (tab === 'told') {
+    p.performance.told = {
+      ...p.performance.told,
+      verified: $('#toldSetupVerified')?.checked || false,
+      source: $('#toldSetupSource')?.value.trim() || '',
+      obstacleHeight: number($('#toldObstacleHeight')?.value,50),
+      takeoffSpeedLabels: [$('#toldToLabel1')?.value.trim(),$('#toldToLabel2')?.value.trim(),$('#toldToLabel3')?.value.trim()].filter(Boolean),
+      landingSpeedLabels: [$('#toldLdLabel1')?.value.trim(),$('#toldLdLabel2')?.value.trim()].filter(Boolean),
+      defaultTakeoffConfig: $('#toldDefaultToConfig')?.value.trim() || 'NORMAL',
+      defaultLandingConfig: $('#toldDefaultLdConfig')?.value.trim() || 'NORMAL',
+      windUse: $('#toldWindUse')?.value || 'steady',
+      takeoffSafetyFactor: number($('#toldDefaultToSafety')?.value,50),
+      landingSafetyFactor: number($('#toldDefaultLdSafety')?.value,50)
     };
+  } else if (tab === 'corrections') {
+    const ids = [
+      'toGrassPct','toWetPct','toSoftPct','toContaminatedPct','ldGrassPct','ldWetPct','ldSoftPct','ldContaminatedPct',
+      'toHeadwindPctPerKt','toTailwindPctPerKt','ldHeadwindPctPerKt','ldTailwindPctPerKt',
+      'toUpslopePctPerPct','toDownslopePctPerPct','ldUpslopePctPerPct','ldDownslopePctPerPct'
+    ];
+    p.performance.corrections = Object.fromEntries(ids.map(key => [key, number($(`#corr-${key}`)?.value)]));
   }
 }
 
@@ -1028,15 +1438,44 @@ function renderPerformanceEditor() {
   $$('[data-perf-editor]').forEach(button => button.classList.toggle('active', button.dataset.perfEditor === state.perfEditorTab));
   const root = $('#performanceEditor');
   const tab = state.perfEditorTab;
-  if (tab === 'takeoff' || tab === 'landing') {
+  if (tab === 'told') {
+    const t = p.performance.told || {};
+    const toLabels = [...(t.takeoffSpeedLabels || []), '','',''].slice(0,3);
+    const ldLabels = [...(t.landingSpeedLabels || []), '',''].slice(0,2);
+    root.innerHTML = `<div class="performance-source-row"><label class="verify-toggle"><input id="toldSetupVerified" type="checkbox" ${t.verified?'checked':''}><span>TOLD tables verified against current POH / AFM</span></label><label><span>Performance source / revision</span><input id="toldSetupSource" value="${esc(t.source || '')}" placeholder="POH section, AFM revision, supplement"></label></div>
+      <div class="told-setup-grid">
+        <label><span>Obstacle height ft</span><input id="toldObstacleHeight" type="number" step="1" value="${esc(t.obstacleHeight ?? 50)}"></label>
+        <label><span>Wind correction uses</span><select id="toldWindUse"><option value="steady" ${t.windUse!=='gust'?'selected':''}>Steady wind</option><option value="gust" ${t.windUse==='gust'?'selected':''}>Gust value</option></select></label>
+        <label><span>Default takeoff config</span><input id="toldDefaultToConfig" value="${esc(t.defaultTakeoffConfig || 'NORMAL')}"></label>
+        <label><span>Default landing config</span><input id="toldDefaultLdConfig" value="${esc(t.defaultLandingConfig || 'NORMAL')}"></label>
+        <label><span>Takeoff speed label 1</span><input id="toldToLabel1" value="${esc(toLabels[0] || 'V1')}"></label>
+        <label><span>Takeoff speed label 2</span><input id="toldToLabel2" value="${esc(toLabels[1] || 'VR')}"></label>
+        <label><span>Takeoff speed label 3</span><input id="toldToLabel3" value="${esc(toLabels[2] || 'V2')}"></label>
+        <label><span>Default takeoff factor %</span><input id="toldDefaultToSafety" type="number" step="5" value="${esc(t.takeoffSafetyFactor ?? 50)}"></label>
+        <label><span>Landing speed label 1</span><input id="toldLdLabel1" value="${esc(ldLabels[0] || 'VREF')}"></label>
+        <label><span>Landing speed label 2</span><input id="toldLdLabel2" value="${esc(ldLabels[1] || 'VAPP')}"></label>
+        <label><span>Default landing factor %</span><input id="toldDefaultLdSafety" type="number" step="5" value="${esc(t.landingSafetyFactor ?? 50)}"></label>
+      </div>`;
+  } else if (tab === 'takeoff' || tab === 'landing') {
     const rows = p.performance[tab] || [];
-    root.innerHTML = `<div class="performance-editor-toolbar"><button class="secondary-button compact" id="addPerformanceRow">ADD DATA POINT</button></div><div class="table-wrap"><table class="data-table editable"><thead><tr><th>Pressure alt ft</th><th>Temp °C</th><th>Weight</th><th>Ground roll ft</th><th>Over 50 ft</th><th></th></tr></thead><tbody>${rows.map((r,i)=>`<tr data-performance-row="${i}"><td><input data-key="pa" type="number" value="${esc(r.pa)}"></td><td><input data-key="temp" type="number" value="${esc(r.temp)}"></td><td><input data-key="weight" type="number" value="${esc(r.weight)}"></td><td><input data-key="groundRoll" type="number" value="${esc(r.groundRoll)}"></td><td><input data-key="over50" type="number" value="${esc(r.over50)}"></td><td><button class="row-delete" data-delete-performance="${i}">×</button></td></tr>`).join('')}</tbody></table></div>`;
+    const takeoff = tab === 'takeoff';
+    const headers = takeoff
+      ? '<th>Config</th><th>PA ft</th><th>Temp °C</th><th>Weight</th><th>Ground roll</th><th>Over obstacle</th><th>Accel-stop</th><th>Speed 1</th><th>Speed 2</th><th>Speed 3</th><th>Limit wt</th><th></th>'
+      : '<th>Config</th><th>PA ft</th><th>Temp °C</th><th>Weight</th><th>Ground roll</th><th>Over obstacle</th><th>Speed 1</th><th>Speed 2</th><th>Limit wt</th><th></th>';
+    root.innerHTML = `<div class="performance-editor-toolbar"><button class="secondary-button compact" id="addPerformanceRow">ADD DATA POINT</button></div><div class="table-wrap"><table class="data-table editable performance-table-editor"><thead><tr>${headers}</tr></thead><tbody>${rows.map((r,i)=>`<tr data-performance-row="${i}">
+      <td><input data-key="config" value="${esc(r.config || 'NORMAL')}"></td><td><input data-key="pa" type="number" value="${esc(r.pa)}"></td><td><input data-key="temp" type="number" value="${esc(r.temp)}"></td><td><input data-key="weight" type="number" value="${esc(r.weight)}"></td><td><input data-key="groundRoll" type="number" value="${esc(r.groundRoll ?? '')}"></td><td><input data-key="over50" type="number" value="${esc(r.over50 ?? '')}"></td>${takeoff?`<td><input data-key="accelerateStop" type="number" value="${esc(r.accelerateStop ?? '')}"></td>`:''}<td><input data-key="speed1" type="number" value="${esc(r.speed1 ?? '')}"></td><td><input data-key="speed2" type="number" value="${esc(r.speed2 ?? '')}"></td>${takeoff?`<td><input data-key="speed3" type="number" value="${esc(r.speed3 ?? '')}"></td>`:''}<td><input data-key="limitWeight" type="number" value="${esc(r.limitWeight ?? '')}"></td><td><button class="row-delete" data-delete-performance="${i}">×</button></td></tr>`).join('')}</tbody></table></div>`;
   } else if (tab === 'cruise') {
     const rows = p.performance.cruise || [];
     root.innerHTML = `<div class="performance-editor-toolbar"><button class="secondary-button compact" id="addPerformanceRow">ADD DATA POINT</button></div><div class="table-wrap"><table class="data-table editable"><thead><tr><th>Altitude ft</th><th>Power %</th><th>TAS kt</th><th>Fuel / hr</th><th></th></tr></thead><tbody>${rows.map((r,i)=>`<tr data-performance-row="${i}"><td><input data-key="altitude" type="number" value="${esc(r.altitude)}"></td><td><input data-key="power" type="number" value="${esc(r.power)}"></td><td><input data-key="tas" type="number" value="${esc(r.tas)}"></td><td><input data-key="burn" type="number" step="0.1" value="${esc(r.burn)}"></td><td><button class="row-delete" data-delete-performance="${i}">×</button></td></tr>`).join('')}</tbody></table></div>`;
   } else {
     const c = p.performance.corrections || {};
-    root.innerHTML = `<div class="correction-grid"><label><span>Grass increase %</span><input id="corrGrass" type="number" step="1" value="${esc(c.grassPct || 0)}"></label><label><span>Wet increase %</span><input id="corrWet" type="number" step="1" value="${esc(c.wetPct || 0)}"></label><label><span>Soft increase %</span><input id="corrSoft" type="number" step="1" value="${esc(c.softPct || 0)}"></label><label><span>Headwind reduction % / kt</span><input id="corrHeadwind" type="number" step="0.1" value="${esc(c.headwindPctPerKt || 0)}"></label><label><span>Tailwind increase % / kt</span><input id="corrTailwind" type="number" step="0.1" value="${esc(c.tailwindPctPerKt || 0)}"></label></div>`;
+    const fields = [
+      ['toGrassPct','Takeoff grass increase %'],['toWetPct','Takeoff wet increase %'],['toSoftPct','Takeoff soft increase %'],['toContaminatedPct','Takeoff contaminated increase %'],
+      ['ldGrassPct','Landing grass increase %'],['ldWetPct','Landing wet increase %'],['ldSoftPct','Landing soft increase %'],['ldContaminatedPct','Landing contaminated increase %'],
+      ['toHeadwindPctPerKt','Takeoff headwind reduction % / kt'],['toTailwindPctPerKt','Takeoff tailwind increase % / kt'],['ldHeadwindPctPerKt','Landing headwind reduction % / kt'],['ldTailwindPctPerKt','Landing tailwind increase % / kt'],
+      ['toUpslopePctPerPct','Takeoff upslope increase % / 1%'],['toDownslopePctPerPct','Takeoff downslope reduction % / 1%'],['ldUpslopePctPerPct','Landing upslope reduction % / 1%'],['ldDownslopePctPerPct','Landing downslope increase % / 1%']
+    ];
+    root.innerHTML = `<div class="correction-grid">${fields.map(([key,label])=>`<label><span>${esc(label)}</span><input id="corr-${key}" type="number" step="0.1" value="${esc(c[key] || 0)}"></label>`).join('')}</div>`;
   }
 }
 
@@ -1113,6 +1552,7 @@ function duplicateProfile() {
   copy.name = `${source.name} Copy`;
   copy.registration = '';
   copy.verified = false;
+  if (copy.performance?.told) copy.performance.told.verified = false;
   copy.stations = copy.stations.map(s => ({ ...s, id: uid() }));
   state.profiles.push(copy);
   state.editorProfileId = copy.id;
@@ -1359,22 +1799,35 @@ function officialNotamCheck() {
 
 function performanceWorksheetText() {
   const p = state.performance;
-  if (!p) return 'No performance calculation.';
-  const lines = [
-    'AEROBRIEF PERFORMANCE WORKSHEET',
-    `Aircraft: ${activeProfile()?.name || ''}`,
-    `Route: ${state.flight.origin} - ${state.flight.destination}`,
-    `Pressure altitude: ${Math.round(p.pa)} ft`,
-    `Density altitude: ${Math.round(p.da)} ft`,
-    `Headwind: ${formatNumber(p.headwind,1)} kt`,
-    `Crosswind: ${formatNumber(p.crosswind,1)} kt`,
-    `Runway length: ${p.runwayLength || 'not entered'} ft`,
-    p.takeoff ? `Takeoff planned over-50-ft: ${Math.round(p.takeoff.plannedOver50)} ft` : 'Takeoff table unavailable',
-    p.landing ? `Landing planned over-50-ft: ${Math.round(p.landing.plannedOver50)} ft` : 'Landing table unavailable',
-    `Profile verified: ${p.profileVerified ? 'YES' : 'NO'}`,
-    'VERIFY AGAINST CURRENT POH/AFM AND ACTUAL CONDITIONS.'
-  ];
-  return lines.join('\n');
+  if (!p) return 'No TOLD calculation.';
+  const profile = activeProfile();
+  const setup = profile?.performance?.told || {};
+  const phaseLines = (result,label,labels) => [
+    '', `${label}: ${result.airport} RWY ${result.runway || '—'} · ${result.config || '—'} · ${result.status}`,
+    `Weight: ${Math.round(result.weight)} ${profile?.units?.weight || ''} · PA ${Math.round(result.pa)} ft · DA ${Math.round(result.da)} ft`,
+    `Wind: H/W ${formatNumber(result.headwind,1)} kt · X/W ${formatNumber(result.crosswind,1)} kt · ${result.surface} · slope ${formatNumber(result.slope,1)}%`,
+    `Speeds: ${toldSpeedText(result,labels)}`,
+    `Required: ${toldRequiredText(result)}`,
+    `Available: ${toldAvailableText(result)}`,
+    `Margins: ${toldMarginText(result)}`,
+    result.notes ? `Notes: ${result.notes}` : '',
+    result.technique ? `Technique: ${result.technique}` : '',
+    ...result.issues.map(issue => `CHECK: ${issue.text}`)
+  ].filter(Boolean);
+  return [
+    'AEROBRIEF TOLD REPORT',
+    `Report ID: ${p.reportId}`,
+    `Generated: ${formatDateTime(p.generatedAt)}`,
+    `Aircraft: ${profile?.registration || ''} · ${profile?.name || ''}`,
+    `Aircraft profile revision: ${profile?.revision || 'NOT ENTERED'}`,
+    `Performance source: ${p.performanceSource || 'NOT ENTERED'}`,
+    `Aircraft profile verified: ${p.profileReady ? 'YES' : 'NO'} · TOLD data verified: ${p.performanceReady ? 'YES' : 'NO'} · Report stale: ${p.stale ? 'YES' : 'NO'}`,
+    ...phaseLines(p.takeoff,'TAKEOFF',setup.takeoffSpeedLabels || ['V1','VR','V2']),
+    ...phaseLines(p.landing,'LANDING',setup.landingSpeedLabels || ['VREF','VAPP']),
+    '', `Prepared by: ${$('#toldPreparedBy').value.trim() || '—'}`,
+    `Report notes: ${$('#toldReportNotes').value.trim() || '—'}`,
+    '', 'VERIFY AGAINST CURRENT POH/AFM, RUNWAY DECLARED DISTANCES, ACTUAL CONDITIONS, CONFIGURATION AND AIRCRAFT STATUS.'
+  ].join('\n');
 }
 
 function setView(name) {
@@ -1388,8 +1841,9 @@ function setView(name) {
   const meta = viewMeta[name] || viewMeta.plan;
   $('#viewEyebrow').textContent = meta[0];
   $('#viewTitle').textContent = meta[1];
-  if (window.innerWidth <= 920) $('#sidebar').classList.remove('open');
+  if (window.innerWidth <= 920) closeMobileNavigation();
   if (name === 'aircraft') renderProfileEditor();
+  if (name === 'performance') syncToldInputs(false);
   if (name === 'checklists') renderChecklists();
   if (name === 'flights') renderSavedFlights();
   if (name === 'settings') renderSettings();
@@ -1434,10 +1888,44 @@ async function fetchSourceStatus() {
   try { const data=await fetchJson('/api/source-status'); state.sourceStatus=data.sources || []; renderSettings(); } catch { state.sourceStatus=[]; }
 }
 
+function closeMobileNavigation() {
+  $('#sidebar').classList.remove('open');
+  document.body.classList.remove('sidebar-open');
+  $('#menuButton').setAttribute('aria-expanded','false');
+}
+
+function applyNavigationState() {
+  if (window.innerWidth <= 920) {
+    document.body.classList.remove('sidebar-stowed');
+    if (!$('#sidebar').classList.contains('open')) document.body.classList.remove('sidebar-open');
+  } else {
+    closeMobileNavigation();
+    const stowed = localStorage.getItem(STORAGE.navigation) === 'stowed';
+    document.body.classList.toggle('sidebar-stowed',stowed);
+    $('#menuButton').setAttribute('aria-expanded',String(!stowed));
+  }
+}
+
+function toggleNavigation() {
+  if (window.innerWidth <= 920) {
+    const open = !$('#sidebar').classList.contains('open');
+    $('#sidebar').classList.toggle('open',open);
+    document.body.classList.toggle('sidebar-open',open);
+    $('#menuButton').setAttribute('aria-expanded',String(open));
+  } else {
+    const stowed = !document.body.classList.contains('sidebar-stowed');
+    document.body.classList.toggle('sidebar-stowed',stowed);
+    localStorage.setItem(STORAGE.navigation,stowed?'stowed':'expanded');
+    $('#menuButton').setAttribute('aria-expanded',String(!stowed));
+  }
+}
+
 function bindEvents() {
   $$('[data-view]').forEach(button => button.addEventListener('click',()=>setView(button.dataset.view)));
-  $('#menuButton').addEventListener('click',()=>$('#sidebar').classList.toggle('open'));
-  document.addEventListener('click',event=>{ if (window.innerWidth<=920 && $('#sidebar').classList.contains('open') && !event.target.closest('#sidebar') && !event.target.closest('#menuButton')) $('#sidebar').classList.remove('open'); });
+  $('#menuButton').addEventListener('click',toggleNavigation);
+  $('#sidebarStowButton').addEventListener('click',toggleNavigation);
+  $('#sidebarScrim').addEventListener('click',closeMobileNavigation);
+  window.addEventListener('resize',applyNavigationState);
 
   $$('[data-view-panel="plan"] input, [data-view-panel="plan"] select, [data-view-panel="plan"] textarea').forEach(input => input.addEventListener('input',()=>{
     if (input.classList.contains('icao-input')) input.value=input.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,5);
@@ -1456,7 +1944,10 @@ function bindEvents() {
       if (p.registration) state.flight.callsign=p.registration;
       applyFlight(state.flight);
     }
+    state.performance = null;
+    state.flight.told = null;
     renderAll();
+    syncToldInputs(true,false);
   });
   $('#flightRules').addEventListener('change',()=>{
     const s=loadSettings();
@@ -1478,8 +1969,22 @@ function bindEvents() {
   $('#resetLoadButton').addEventListener('click',resetLoad);
   $('#saveLoadButton').addEventListener('click',()=>{persistActive();toast('Load saved with active flight');});
 
+  $('#syncToldButton').addEventListener('click',()=>syncToldInputs(true));
   $('#calculatePerformanceButton').addEventListener('click',calculatePerformance);
-  $('#copyPerformanceButton').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(performanceWorksheetText());toast('Performance worksheet copied');}catch{toast('Clipboard access blocked');}});
+  $('#copyPerformanceButton').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(performanceWorksheetText());toast('TOLD report copied');}catch{toast('Clipboard access blocked');}});
+  $('#downloadToldButton').addEventListener('click',()=>download(`${state.performance?.reportId || 'aerobrief-told'}.txt`,performanceWorksheetText(),'text/plain'));
+  $('#shareToldButton').addEventListener('click',async()=>{const text=performanceWorksheetText();try{if(navigator.share)await navigator.share({title:'AeroBrief TOLD Report',text});else{await navigator.clipboard.writeText(text);toast('Share unavailable; report copied');}}catch(error){if(error?.name!=='AbortError')toast('Unable to share report');}});
+  $('#printToldButton').addEventListener('click',()=>{document.body.classList.add('print-told');window.print();});
+  window.addEventListener('afterprint',()=>document.body.classList.remove('print-told'));
+  $$('[data-view-panel="performance"] input, [data-view-panel="performance"] select').forEach(input=>input.addEventListener('input',()=>{
+    if(input.classList.contains('icao-input'))input.value=input.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,5);
+    if (!state.performance) return;
+    if (input.id === 'toldPreparedBy' || input.id === 'toldReportNotes') {
+      state.performance.preparedBy=$('#toldPreparedBy').value.trim();
+      state.performance.reportNotes=$('#toldReportNotes').value.trim();
+      state.flight.told=structuredCloneSafe(state.performance); persistActive();
+    } else { state.performance.stale=true; state.flight.told=structuredCloneSafe(state.performance); persistActive(); renderPerformance(); }
+  }));
 
   $('#aircraftList').addEventListener('click',event=>{const button=event.target.closest('[data-profile-id]');if(button)chooseEditorProfile(button.dataset.profileId);});
   $('#newAircraftButton').addEventListener('click',newProfile);
@@ -1492,7 +1997,7 @@ function bindEvents() {
   $('#envelopeEditorRows').addEventListener('click',event=>{const button=event.target.closest('[data-delete-envelope]');if(!button)return;collectProfileEditor();state.editorDraft.envelope.splice(Number(button.dataset.deleteEnvelope),1);renderEnvelopeEditor();});
   $$('[data-perf-editor]').forEach(button=>button.addEventListener('click',()=>{collectProfileEditor();state.perfEditorTab=button.dataset.perfEditor;renderPerformanceEditor();}));
   $('#performanceEditor').addEventListener('click',event=>{
-    if(event.target.closest('#addPerformanceRow')){collectCurrentPerformanceTable();const tab=state.perfEditorTab;if(tab==='takeoff'||tab==='landing')state.editorDraft.performance[tab].push({pa:0,temp:0,weight:0,groundRoll:0,over50:0});else if(tab==='cruise')state.editorDraft.performance.cruise.push({altitude:0,power:0,tas:0,burn:0});renderPerformanceEditor();return;}
+    if(event.target.closest('#addPerformanceRow')){collectCurrentPerformanceTable();const tab=state.perfEditorTab;if(tab==='takeoff')state.editorDraft.performance.takeoff.push({config:state.editorDraft.performance.told?.defaultTakeoffConfig||'NORMAL',pa:0,temp:0,weight:0,groundRoll:null,over50:null,accelerateStop:null,speed1:null,speed2:null,speed3:null,limitWeight:null});else if(tab==='landing')state.editorDraft.performance.landing.push({config:state.editorDraft.performance.told?.defaultLandingConfig||'NORMAL',pa:0,temp:0,weight:0,groundRoll:null,over50:null,speed1:null,speed2:null,limitWeight:null});else if(tab==='cruise')state.editorDraft.performance.cruise.push({altitude:0,power:0,tas:0,burn:0});renderPerformanceEditor();return;}
     const del=event.target.closest('[data-delete-performance]');if(del){collectCurrentPerformanceTable();state.editorDraft.performance[state.perfEditorTab].splice(Number(del.dataset.deletePerformance),1);renderPerformanceEditor();}
   });
   $('#exportAircraftButton').addEventListener('click',exportProfiles);
@@ -1555,6 +2060,8 @@ function init() {
   bindEvents();
   restoreState();
   renderAll();
+  applyNavigationState();
+  syncToldInputs(false);
   updateOnlineStatus();
   startClock();
   fetchSourceStatus();

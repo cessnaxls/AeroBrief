@@ -32,7 +32,7 @@ const duplicateIds = ids.filter((id,index)=>ids.indexOf(id)!==index);
 if (duplicateIds.length) failures.push(`Duplicate HTML IDs: ${[...new Set(duplicateIds)].join(', ')}`);
 const idSet = new Set(ids);
 const staticRefs = [...app.matchAll(/\$\(['"]#([^'"]+)['"]\)/g)].map(match=>match[1]);
-const dynamicIds = new Set(['corrGrass','corrWet','corrSoft','corrHeadwind','corrTailwind']);
+const dynamicIds = new Set(['corrGrass','corrWet','corrSoft','corrHeadwind','corrTailwind','toldSetupVerified','toldSetupSource','toldObstacleHeight','toldToLabel1','toldToLabel2','toldToLabel3','toldLdLabel1','toldLdLabel2','toldDefaultToConfig','toldDefaultLdConfig','toldWindUse','toldDefaultToSafety','toldDefaultLdSafety']);
 const missingRefs = [...new Set(staticRefs.filter(id=>!idSet.has(id) && !dynamicIds.has(id)))];
 if (missingRefs.length) failures.push(`Static DOM IDs referenced but absent: ${missingRefs.join(', ')}`);
 

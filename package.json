@@ -1,9 +1,9 @@
 {
   "name": "aerobrief-realworld",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "private": true,
   "type": "module",
-  "description": "iPad-first real-world supplemental flight planning and briefing PWA using authoritative FAA/NWS sources.",
+  "description": "iPad and iPhone real-world supplemental flight planning, aircraft profiles, W&B, TOLD performance and FAA/NWS briefing PWA.",
   "scripts": {
     "start": "node server.mjs",
     "check": "node --check server.mjs && node --check public/app.js",
