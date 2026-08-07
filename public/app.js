@@ -184,6 +184,7 @@ function formatDateTime(value) {
 }
 
 function ageMinutes(value) {
+  if (!value) return Infinity;
   const t = new Date(value).getTime();
   return Number.isFinite(t) ? Math.max(0, (Date.now() - t) / 60000) : Infinity;
 }
@@ -811,12 +812,12 @@ function renderLoadRows() {
   if (!profile) { $('#loadRows').innerHTML = ''; return; }
   const rows = state.wb?.rows || [];
   $('#loadRows').innerHTML = rows.map(row => `<tr>
-    <td><strong>${esc(row.station.name)}</strong><div class="eyebrow">${esc(row.station.type.toUpperCase())}</div></td>
-    <td>${formatNumber(row.station.arm,2)} ${esc(profile.units.arm)}</td>
-    <td><input data-load-station="${esc(row.station.id)}" type="number" min="0" step="0.1" value="${esc(row.input)}"><small>${row.station.type === 'fuel' ? esc(profile.units.fuel) : esc(profile.units.weight)}</small></td>
-    <td>${formatNumber(row.weight,1)} ${esc(profile.units.weight)}</td>
-    <td>${formatNumber(row.moment,1)}</td>
-    <td>${row.station.max > 0 ? `${formatNumber(row.station.max,1)} ${row.station.type === 'fuel' ? esc(profile.units.fuel) : esc(profile.units.weight)}` : '—'}</td>
+    <td data-label="Station"><strong>${esc(row.station.name)}</strong><div class="eyebrow">${esc(row.station.type.toUpperCase())}</div></td>
+    <td data-label="Arm">${formatNumber(row.station.arm,2)} ${esc(profile.units.arm)}</td>
+    <td data-label="Input"><div class="load-input-wrap"><input data-load-station="${esc(row.station.id)}" type="number" min="0" step="0.1" value="${esc(row.input)}"><small>${row.station.type === 'fuel' ? esc(profile.units.fuel) : esc(profile.units.weight)}</small></div></td>
+    <td data-label="Weight">${formatNumber(row.weight,1)} ${esc(profile.units.weight)}</td>
+    <td data-label="Moment">${formatNumber(row.moment,1)}</td>
+    <td data-label="Limit">${row.station.max > 0 ? `${formatNumber(row.station.max,1)} ${row.station.type === 'fuel' ? esc(profile.units.fuel) : esc(profile.units.weight)}` : '—'}</td>
   </tr>`).join('');
 }
 

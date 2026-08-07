@@ -1,7 +1,7 @@
 {
   "name": "AeroBrief Flight Operations",
   "short_name": "AeroBrief",
-  "description": "iPad and iPhone supplemental real-world flight planning, aircraft profiles, W&B, TOLD performance and FAA/NWS briefing app.",
+  "description": "Premium iPad and iPhone supplemental real-world flight planning, aircraft profiles, W&B, TOLD performance and FAA/NWS briefing app.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#071017",

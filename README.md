@@ -1,4 +1,4 @@
-# AeroBrief Flight Operations 2.1
+# AeroBrief Flight Operations 2.2
 
 AeroBrief is an iPad- and iPhone-optimized progressive web app for **supplemental real-world preflight planning**. It combines route and fuel calculations, highly configurable aircraft weight-and-balance profiles, aircraft-specific TOLD performance reports, checklists, personal minima, and live federal aviation-weather/TFR data.
 
@@ -54,6 +54,10 @@ Public anonymous access to the complete FAA NOTAM machine interface is not assum
 - Local saved flights and tamper-evident briefing snapshots using SHA-256 hashes
 - Full JSON backup/restore for moving data between devices
 - Standalone iPad/iPhone Home Screen installation and offline application shell
+
+## Premium interface release
+
+Version 2.2 completes a visual and responsive pass across every workspace. The interface uses consistent vector navigation icons, larger iOS-safe form text, 44-point touch targets, unified panel spacing, safe-area padding, premium empty states and tab-specific mobile layouts. W&B rows and TOLD results become readable cards on narrow phones, while profile and performance controls remain horizontally accessible without forcing the entire page to overflow.
 
 ## Mobile and tablet interface
 

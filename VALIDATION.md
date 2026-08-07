@@ -62,7 +62,7 @@ Test at minimum:
 | Rotation during use | Active view retained and no controls become unreachable |
 | Home Screen standalone mode | Safe-area insets protect status/home-indicator regions |
 
-Repeat this matrix after significant CSS, iOS/iPadOS or Safari changes.
+Repeat this matrix after significant CSS, iOS/iPadOS or Safari changes. Use the detailed per-tab checklist in `UI_QA.md` and record the devices, OS versions, orientations and results used for release acceptance.
 
 ## Preflight functional test
 

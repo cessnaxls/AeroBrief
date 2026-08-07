@@ -18,19 +18,19 @@
   <div class="app-shell" id="app">
     <aside class="sidebar" id="sidebar">
       <div class="brand">
-        <div class="brand-mark" aria-hidden="true">✈</div>
+        <div class="brand-mark" aria-hidden="true"><svg class="brand-logo" viewBox="0 0 32 32" fill="none"><path d="M16 3.5 19 13l9.5 3-9.5 3-3 9.5L13 19l-9.5-3 9.5-3L16 3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M16 8v16M8 16h16" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" opacity=".72"/></svg></div>
         <div class="brand-copy"><strong>AeroBrief</strong><span>FLIGHT OPERATIONS</span></div>
-        <button class="sidebar-stow-button" id="sidebarStowButton" aria-label="Stow navigation" title="Stow navigation">‹</button>
+        <button class="sidebar-stow-button" id="sidebarStowButton" aria-label="Stow navigation" title="Stow navigation"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="m12.5 5-5 5 5 5"/></svg></button>
       </div>
       <nav class="nav-list" aria-label="Primary navigation">
-        <button class="nav-item active" data-view="plan"><span class="nav-icon">PL</span><span class="nav-label">PLAN</span><b>01</b></button>
-        <button class="nav-item" data-view="brief"><span class="nav-icon">BR</span><span class="nav-label">BRIEF</span><b>02</b></button>
-        <button class="nav-item" data-view="wb"><span class="nav-icon">WB</span><span class="nav-label">W&amp;B</span><b>03</b></button>
-        <button class="nav-item" data-view="performance"><span class="nav-icon">TD</span><span class="nav-label">TOLD</span><b>04</b></button>
-        <button class="nav-item" data-view="aircraft"><span class="nav-icon">AC</span><span class="nav-label">AIRCRAFT</span><b>05</b></button>
-        <button class="nav-item" data-view="checklists"><span class="nav-icon">CK</span><span class="nav-label">CHECKLISTS</span><b>06</b></button>
-        <button class="nav-item" data-view="flights"><span class="nav-icon">FL</span><span class="nav-label">FLIGHTS</span><b>07</b></button>
-        <button class="nav-item" data-view="settings"><span class="nav-icon">ST</span><span class="nav-label">SETTINGS</span><b>08</b></button>
+        <button class="nav-item active" data-view="plan"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="5" cy="18" r="2"/><circle cx="19" cy="6" r="2"/><path d="M7 17c3-1 2-5 5-6s3 1 5-3"/></svg></span><span class="nav-label">PLAN</span><b>01</b></button>
+        <button class="nav-item" data-view="brief"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 16.5h9.5a3.5 3.5 0 0 0 .5-7 5 5 0 0 0-9.6-1.2A4.2 4.2 0 0 0 7 16.5Z"/><path d="M7 20h10M9 12.5h6"/></svg></span><span class="nav-label">BRIEF</span><b>02</b></button>
+        <button class="nav-item" data-view="wb"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v18M6 6h12M4 18h5M15 18h5"/><path d="m6 6-3 7h6L6 6Zm12 0-3 7h6l-3-7Z"/></svg></span><span class="nav-label">W&amp;B</span><b>03</b></button>
+        <button class="nav-item" data-view="performance"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 21 9 3h6l4 18H5Z"/><path d="M12 5v3m0 3v3m0 3v2M7 17h10"/></svg></span><span class="nav-label">TOLD</span><b>04</b></button>
+        <button class="nav-item" data-view="aircraft"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m21 16-8-3V5.5a1.5 1.5 0 0 0-3 0V13l-7 3v2l7-1.5V20l-2 1v1l3.5-.5L15 22v-1l-2-1v-3.5L21 18v-2Z"/></svg></span><span class="nav-label">AIRCRAFT</span><b>05</b></button>
+        <button class="nav-item" data-view="checklists"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="m8 9 2 2 4-4M8 16h8"/></svg></span><span class="nav-label">CHECKLISTS</span><b>06</b></button>
+        <button class="nav-item" data-view="flights"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 7.5h7l2 2h9v9.5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7.5Z"/><path d="M3 7.5V5a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v2.5"/></svg></span><span class="nav-label">FLIGHTS</span><b>07</b></button>
+        <button class="nav-item" data-view="settings"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h3M11 12h9M4 18h8M16 18h4"/><circle cx="16" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="14" cy="18" r="2"/></svg></span><span class="nav-label">SETTINGS</span><b>08</b></button>
       </nav>
       <div class="sidebar-footer">
         <div class="status-row"><span class="status-dot" id="onlineDot"></span><span id="onlineLabel">ONLINE</span></div>
@@ -42,7 +42,7 @@
     <main class="main-shell">
       <header class="topbar">
         <div class="topbar-left">
-          <button class="icon-button" id="menuButton" aria-label="Toggle navigation" aria-expanded="false" title="Toggle navigation">☰</button>
+          <button class="icon-button" id="menuButton" aria-label="Toggle navigation" aria-expanded="false" title="Toggle navigation"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
           <div><span class="eyebrow" id="viewEyebrow">FLIGHT PLANNING</span><h1 id="viewTitle">Build and validate a flight</h1></div>
         </div>
         <div class="flight-strip">
@@ -124,7 +124,7 @@
             </article>
           </div>
 
-          <article class="panel">
+          <article class="panel preflight-panel">
             <div class="panel-heading"><div><span class="eyebrow">PREFLIGHT COMPLETENESS</span><h2>Required planning checks</h2></div><span class="updated-label" id="completenessLabel">0 OF 6 COMPLETE</span></div>
             <div class="check-grid" id="planningChecklist"></div>
           </article>
@@ -176,7 +176,7 @@
           <div class="wb-layout">
             <article class="panel">
               <div class="panel-heading"><div><span class="eyebrow">LOADING</span><h2>Stations and fuel</h2></div></div>
-              <div class="table-wrap"><table class="data-table"><thead><tr><th>Station</th><th>Arm</th><th>Input</th><th>Weight</th><th>Moment</th><th>Limit</th></tr></thead><tbody id="loadRows"></tbody></table></div>
+              <div class="table-wrap wb-load-table-wrap"><table class="data-table wb-load-table"><thead><tr><th>Station</th><th>Arm</th><th>Input</th><th>Weight</th><th>Moment</th><th>Limit</th></tr></thead><tbody id="loadRows"></tbody></table></div>
               <div class="notice info"><strong>Aircraft-specific data required</strong><span>Enter the exact empty weight, empty moment/arm, station arms, fuel arms, usable fuel and envelope from the current aircraft records and POH/AFM.</span></div>
             </article>
             <article class="panel wb-summary-panel">

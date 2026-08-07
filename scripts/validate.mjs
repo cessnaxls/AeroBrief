@@ -5,7 +5,7 @@ import { spawnSync } from 'node:child_process';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const required = [
-  'server.mjs','package.json','package-lock.json','render.yaml','README.md','SAFETY.md','VALIDATION.md',
+  'server.mjs','package.json','package-lock.json','render.yaml','README.md','SAFETY.md','VALIDATION.md','UI_QA.md',
   'public/index.html','public/styles.css','public/app.js','public/sw.js','public/manifest.webmanifest',
   'public/icons/icon-192.png','public/icons/icon-512.png'
 ];

@@ -56,7 +56,7 @@ async function cachedFetch(url, ttlMs = 60_000, accept = 'application/json,text/
       signal: controller.signal,
       headers: {
         Accept: accept,
-        'User-Agent': 'AeroBrief-RealWorld-PWA/2.1 (+https://github.com/)'
+        'User-Agent': 'AeroBrief-RealWorld-PWA/2.2 (+https://github.com/)'
       }
     });
     if (response.status === 204) return [];
@@ -176,7 +176,7 @@ async function handleApi(req, res, url) {
       return json(res, 200, {
         ok: true,
         service: 'aerobrief-realworld',
-        version: '2.1.0',
+        version: '2.2.0',
         time: new Date().toISOString(),
         sources: ['FAA Aviation Weather Center', 'FAA TFR', 'FAA Flight Service links']
       });
