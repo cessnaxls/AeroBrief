@@ -2,77 +2,128 @@ const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 
 const STORAGE = {
-  active: 'aerobrief.active.v1',
-  saved: 'aerobrief.saved.v1',
-  settings: 'aerobrief.settings.v1'
-};
-
-const FALLBACK_AIRPORTS = {
-  KIND: { icaoId: 'KIND', name: 'Indianapolis International', lat: 39.7173, lon: -86.2944, elev: 797, runways: [{ runway: '05L/23R', dimension: '11200x150' }, { runway: '05R/23L', dimension: '10000x150' }, { runway: '14/32', dimension: '7605x150' }] },
-  KUMP: { icaoId: 'KUMP', name: 'Indianapolis Metropolitan', lat: 39.9352, lon: -86.045, elev: 811, runways: [{ runway: '15/33', dimension: '4004x100' }] },
-  KHFY: { icaoId: 'KHFY', name: 'Indy South Greenwood', lat: 39.6284, lon: -86.0879, elev: 822, runways: [{ runway: '01/19', dimension: '5102x100' }] },
-  KMIA: { icaoId: 'KMIA', name: 'Miami International', lat: 25.7959, lon: -80.287, elev: 8, runways: [{ runway: '08L/26R', dimension: '8600x150' }, { runway: '08R/26L', dimension: '10506x200' }, { runway: '09/27', dimension: '13016x150' }, { runway: '12/30', dimension: '9355x150' }] },
-  KFLL: { icaoId: 'KFLL', name: 'Fort Lauderdale/Hollywood International', lat: 26.0726, lon: -80.1527, elev: 65, runways: [{ runway: '10L/28R', dimension: '9000x150' }, { runway: '10R/28L', dimension: '8000x150' }] },
-  KORD: { icaoId: 'KORD', name: "Chicago O'Hare International", lat: 41.9742, lon: -87.9073, elev: 672, runways: [{ runway: '04L/22R' }, { runway: '04R/22L' }, { runway: '09L/27R' }, { runway: '09C/27C' }, { runway: '09R/27L' }, { runway: '10L/28R' }, { runway: '10C/28C' }, { runway: '10R/28L' }] },
-  KJFK: { icaoId: 'KJFK', name: 'John F Kennedy International', lat: 40.6413, lon: -73.7781, elev: 13, runways: [{ runway: '04L/22R' }, { runway: '04R/22L' }, { runway: '13L/31R' }, { runway: '13R/31L' }] },
-  KLAX: { icaoId: 'KLAX', name: 'Los Angeles International', lat: 33.9416, lon: -118.4085, elev: 128, runways: [{ runway: '06L/24R' }, { runway: '06R/24L' }, { runway: '07L/25R' }, { runway: '07R/25L' }] },
-  KATL: { icaoId: 'KATL', name: 'Hartsfield-Jackson Atlanta International', lat: 33.6407, lon: -84.4277, elev: 1026, runways: [{ runway: '08L/26R' }, { runway: '08R/26L' }, { runway: '09L/27R' }, { runway: '09R/27L' }, { runway: '10/28' }] },
-  KDFW: { icaoId: 'KDFW', name: 'Dallas/Fort Worth International', lat: 32.8998, lon: -97.0403, elev: 607, runways: [{ runway: '13L/31R' }, { runway: '13R/31L' }, { runway: '17C/35C' }, { runway: '17L/35R' }, { runway: '17R/35L' }, { runway: '18L/36R' }, { runway: '18R/36L' }] },
-  KDEN: { icaoId: 'KDEN', name: 'Denver International', lat: 39.8561, lon: -104.6737, elev: 5434, runways: [{ runway: '07/25' }, { runway: '08/26' }, { runway: '16L/34R' }, { runway: '16R/34L' }, { runway: '17L/35R' }, { runway: '17R/35L' }] },
-  KSEA: { icaoId: 'KSEA', name: 'Seattle-Tacoma International', lat: 47.4502, lon: -122.3088, elev: 433, runways: [{ runway: '16L/34R' }, { runway: '16C/34C' }, { runway: '16R/34L' }] },
-  KBOS: { icaoId: 'KBOS', name: 'Boston Logan International', lat: 42.3656, lon: -71.0096, elev: 20, runways: [{ runway: '04L/22R' }, { runway: '04R/22L' }, { runway: '09/27' }, { runway: '14/32' }, { runway: '15L/33R' }, { runway: '15R/33L' }] },
-  KSFO: { icaoId: 'KSFO', name: 'San Francisco International', lat: 37.6213, lon: -122.379, elev: 13, runways: [{ runway: '01L/19R' }, { runway: '01R/19L' }, { runway: '10L/28R' }, { runway: '10R/28L' }] },
-  CYYZ: { icaoId: 'CYYZ', name: 'Toronto Pearson International', lat: 43.6777, lon: -79.6248, elev: 569, runways: [{ runway: '05/23' }, { runway: '06L/24R' }, { runway: '06R/24L' }, { runway: '15L/33R' }, { runway: '15R/33L' }] },
-  EGLL: { icaoId: 'EGLL', name: 'London Heathrow', lat: 51.47, lon: -0.4543, elev: 83, runways: [{ runway: '09L/27R' }, { runway: '09R/27L' }] },
-  LFPG: { icaoId: 'LFPG', name: 'Paris Charles de Gaulle', lat: 49.0097, lon: 2.5479, elev: 392, runways: [{ runway: '08L/26R' }, { runway: '08R/26L' }, { runway: '09L/27R' }, { runway: '09R/27L' }] },
-  EHAM: { icaoId: 'EHAM', name: 'Amsterdam Schiphol', lat: 52.3105, lon: 4.7683, elev: -11, runways: [{ runway: '04/22' }, { runway: '06/24' }, { runway: '09/27' }, { runway: '18C/36C' }, { runway: '18L/36R' }, { runway: '18R/36L' }] },
-  OMDB: { icaoId: 'OMDB', name: 'Dubai International', lat: 25.2532, lon: 55.3657, elev: 62, runways: [{ runway: '12L/30R' }, { runway: '12R/30L' }] },
-  RJTT: { icaoId: 'RJTT', name: 'Tokyo Haneda', lat: 35.5494, lon: 139.7798, elev: 21, runways: [{ runway: '04/22' }, { runway: '05/23' }, { runway: '16L/34R' }, { runway: '16R/34L' }] },
-  YSSY: { icaoId: 'YSSY', name: 'Sydney Kingsford Smith', lat: -33.9399, lon: 151.1753, elev: 21, runways: [{ runway: '07/25' }, { runway: '16L/34R' }, { runway: '16R/34L' }] }
+  active: 'aerobrief.rw.active.v2',
+  profiles: 'aerobrief.rw.profiles.v2',
+  flights: 'aerobrief.rw.flights.v2',
+  settings: 'aerobrief.rw.settings.v2',
+  acknowledged: 'aerobrief.rw.ack.v2',
+  checklist: 'aerobrief.rw.checklist.v2'
 };
 
 const viewMeta = {
-  plan: ['FLIGHT PLANNING', 'Build a flight'],
-  brief: ['LIVE BRIEFING', 'Weather and route scan'],
-  map: ['ROUTE OVERVIEW', 'Map and navigation'],
-  ofp: ['DISPATCH PACKAGE', 'Operational flight plan'],
-  saved: ['LOCAL LIBRARY', 'Saved flights'],
-  settings: ['CONFIGURATION', 'App preferences']
+  plan: ['FLIGHT PLANNING', 'Build and validate a flight'],
+  brief: ['AUTHORITATIVE BRIEFING', 'Weather, hazards, TFR and NOTAM gate'],
+  wb: ['WEIGHT & BALANCE', 'Aircraft-specific loading'],
+  performance: ['PERFORMANCE', 'POH / AFM worksheet'],
+  aircraft: ['AIRCRAFT PROFILES', 'Aircraft, W&B and performance configuration'],
+  checklists: ['CHECKLISTS', 'Aircraft-specific procedures'],
+  flights: ['FLIGHT RECORDS', 'Saved flights and briefing snapshots'],
+  settings: ['CONFIGURATION', 'Personal minima and data sources']
 };
 
-const defaultSettings = {
-  aircraft: 'C172',
-  registration: '',
-  tas: 120,
-  fuelBurn: 9.5,
-  reserve: 45,
-  fuelUnit: 'GAL'
+const DEFAULT_SETTINGS = {
+  minCeilingVfr: 2500,
+  minVisibilityVfr: 5,
+  minCeilingIfr: 800,
+  minVisibilityIfr: 2,
+  maxCrosswind: 15,
+  maxGustSpread: 10,
+  maxDensityAltitude: 5000,
+  briefStaleMinutes: 90,
+  manualDistance: '',
+  defaultContingency: 10,
+  reserveVfrDay: 30,
+  reserveVfrNight: 45,
+  reserveIfr: 45,
+  displayDensity: 'comfortable'
 };
+
+const DEFAULT_CHECKLISTS = [
+  { name: 'Preflight', items: ['Aircraft documents — CHECK', 'Weather / NOTAMs / TFRs — REVIEW', 'Fuel quantity and quality — VERIFY', 'Weight and balance — COMPLETE', 'Performance and runway margin — COMPLETE'] },
+  { name: 'Before Start', items: ['Passenger briefing — COMPLETE', 'Seats / belts / doors — SECURE', 'Parking brake — SET', 'Avionics — OFF', 'Checklist — USE AIRCRAFT POH'] },
+  { name: 'Before Takeoff', items: ['Flight controls — FREE AND CORRECT', 'Instruments — CHECK', 'Fuel selector — SET', 'Trim — SET', 'Takeoff briefing — COMPLETE'] }
+];
+
+function uid() {
+  return globalThis.crypto?.randomUUID?.() || `id-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function blankProfile(name = 'New aircraft — enter verified data') {
+  return {
+    id: uid(),
+    name,
+    model: '',
+    registration: '',
+    icao: '',
+    verified: false,
+    revision: '',
+    units: { weight: 'LB', arm: 'IN', fuel: 'GAL' },
+    fuelDensity: 6,
+    emptyWeight: 0,
+    emptyArm: 0,
+    limits: { maxRamp: 0, maxTakeoff: 0, maxLanding: 0, maxZeroFuel: 0, usableFuel: 0, maxCrosswind: 0 },
+    defaults: { tas: 0, burn: 0, taxiBurn: 0 },
+    stations: [
+      { id: uid(), name: 'Front seats', type: 'seat', arm: 0, max: 0, defaultValue: 0 },
+      { id: uid(), name: 'Rear seats', type: 'seat', arm: 0, max: 0, defaultValue: 0 },
+      { id: uid(), name: 'Baggage', type: 'baggage', arm: 0, max: 0, defaultValue: 0 },
+      { id: uid(), name: 'Main fuel', type: 'fuel', arm: 0, max: 0, defaultValue: 0 }
+    ],
+    envelope: [],
+    performance: {
+      takeoff: [],
+      landing: [],
+      cruise: [],
+      corrections: { grassPct: 0, wetPct: 0, softPct: 0, headwindPctPerKt: 0, tailwindPctPerKt: 0 }
+    },
+    checklists: structuredCloneSafe(DEFAULT_CHECKLISTS),
+    updatedAt: new Date().toISOString()
+  };
+}
 
 let state = {
-  plan: null,
+  flight: null,
+  profiles: [],
+  activeProfileId: '',
+  editorProfileId: '',
+  editorDraft: null,
+  perfEditorTab: 'takeoff',
   airports: {},
   weather: { metars: [], tafs: [] },
   hazards: { sigmets: [], gairmets: [], pireps: [] },
-  calculations: {},
+  tfrs: [],
   briefingFetchedAt: null,
-  importedOfpText: '',
-  map: null,
-  mapLayers: [],
-  hazardFilter: 'all'
+  briefingSources: {},
+  hazardFilter: 'all',
+  sourceStatus: [],
+  calculations: {},
+  wb: null,
+  performance: null,
+  checklistChecks: {},
+  activeView: 'plan'
 };
 
-function safeJsonParse(value, fallback) {
+function structuredCloneSafe(value) {
+  return globalThis.structuredClone ? structuredClone(value) : JSON.parse(JSON.stringify(value));
+}
+
+function safeParse(value, fallback) {
   try { return JSON.parse(value); } catch { return fallback; }
 }
 
-function loadSettings() {
-  return { ...defaultSettings, ...safeJsonParse(localStorage.getItem(STORAGE.settings), {}) };
+function number(value, fallback = 0) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
 }
 
-function loadSavedPlans() {
-  const value = safeJsonParse(localStorage.getItem(STORAGE.saved), []);
-  return Array.isArray(value) ? value : [];
+function optionalNumber(value) {
+  if (value === '' || value == null) return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
 }
 
 function esc(value) {
@@ -84,168 +135,139 @@ function esc(value) {
     .replaceAll("'", '&#039;');
 }
 
-function toNumber(value, fallback = 0) {
-  const number = Number(value);
-  return Number.isFinite(number) ? number : fallback;
-}
-
-function clamp(value, min, max) {
-  return Math.min(max, Math.max(min, value));
-}
-
 function normalizeHeading(value) {
-  return (value % 360 + 360) % 360;
+  return (number(value) % 360 + 360) % 360;
 }
 
 function angularDifference(a, b) {
-  return ((a - b + 540) % 360) - 180;
+  return ((number(a) - number(b) + 540) % 360) - 180;
 }
 
 function formatDuration(hours) {
   if (!Number.isFinite(hours) || hours < 0) return '—';
-  const totalMinutes = Math.round(hours * 60);
-  return `${String(Math.floor(totalMinutes / 60)).padStart(2, '0')}:${String(totalMinutes % 60).padStart(2, '0')}`;
+  const total = Math.round(hours * 60);
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+}
+
+function formatNumber(value, digits = 1) {
+  return Number.isFinite(Number(value)) ? Number(value).toFixed(digits) : '—';
 }
 
 function formatDateTime(value) {
-  if (!value) return '—';
-  const date = typeof value === 'number' ? new Date(value * 1000) : new Date(value);
-  return Number.isNaN(date.getTime()) ? '—' : date.toISOString().replace('T', ' ').slice(0, 16) + 'Z';
+  const date = value ? new Date(value) : null;
+  return date && !Number.isNaN(date.getTime()) ? `${date.toISOString().slice(0, 16).replace('T', ' ')}Z` : '—';
 }
 
-function formatFuel(value) {
-  return Number.isFinite(value) ? value.toFixed(value >= 100 ? 0 : 1) : '—';
+function ageMinutes(value) {
+  const t = new Date(value).getTime();
+  return Number.isFinite(t) ? Math.max(0, (Date.now() - t) / 60000) : Infinity;
 }
 
-function hpaToInHg(value) {
-  return Number.isFinite(Number(value)) ? (Number(value) * 0.0295299830714).toFixed(2) : '—';
+function loadSettings() {
+  return { ...DEFAULT_SETTINGS, ...safeParse(localStorage.getItem(STORAGE.settings), {}) };
 }
 
-function setButtonBusy(button, busy, label) {
-  if (!button) return;
-  if (busy) {
-    button.dataset.original = button.textContent;
-    button.textContent = label || 'LOADING…';
-    button.disabled = true;
-  } else {
-    button.textContent = button.dataset.original || button.textContent;
-    button.disabled = false;
-  }
+function loadProfiles() {
+  const stored = safeParse(localStorage.getItem(STORAGE.profiles), null);
+  if (Array.isArray(stored) && stored.length) return stored.map(normalizeProfile);
+  const profile = blankProfile();
+  localStorage.setItem(STORAGE.profiles, JSON.stringify([profile]));
+  return [profile];
 }
 
-let toastTimer;
-function toast(message) {
-  const el = $('#toast');
-  el.textContent = message;
-  el.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
-}
-
-async function fetchJson(url) {
-  const response = await fetch(url, { headers: { Accept: 'application/json' } });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error || `Request failed (${response.status})`);
-  return data;
-}
-
-function defaultPlan() {
-  const settings = loadSettings();
-  const now = new Date();
-  const zuluDate = now.toISOString().slice(0, 10);
-  const rounded = new Date(Math.ceil(now.getTime() / 15 / 60_000) * 15 * 60_000);
+function normalizeProfile(profile) {
+  const blank = blankProfile(profile?.name || 'Aircraft profile');
   return {
-    id: crypto.randomUUID(),
-    callsign: settings.registration || '',
-    aircraft: settings.aircraft,
-    registration: settings.registration,
-    flightRules: 'IFR',
+    ...blank,
+    ...profile,
+    units: { ...blank.units, ...(profile?.units || {}) },
+    limits: { ...blank.limits, ...(profile?.limits || {}) },
+    defaults: { ...blank.defaults, ...(profile?.defaults || {}) },
+    stations: Array.isArray(profile?.stations) ? profile.stations.map(s => ({ id: s.id || uid(), name: s.name || 'Station', type: s.type || 'other', arm: number(s.arm), max: number(s.max), defaultValue: number(s.defaultValue) })) : blank.stations,
+    envelope: Array.isArray(profile?.envelope) ? profile.envelope.map(p => ({ weight: number(p.weight), forward: number(p.forward), aft: number(p.aft) })).sort((a,b) => a.weight - b.weight) : [],
+    performance: {
+      takeoff: Array.isArray(profile?.performance?.takeoff) ? profile.performance.takeoff : [],
+      landing: Array.isArray(profile?.performance?.landing) ? profile.performance.landing : [],
+      cruise: Array.isArray(profile?.performance?.cruise) ? profile.performance.cruise : [],
+      corrections: { ...blank.performance.corrections, ...(profile?.performance?.corrections || {}) }
+    },
+    checklists: Array.isArray(profile?.checklists) ? profile.checklists : structuredCloneSafe(DEFAULT_CHECKLISTS)
+  };
+}
+
+function saveProfiles() {
+  localStorage.setItem(STORAGE.profiles, JSON.stringify(state.profiles));
+}
+
+function loadSavedFlights() {
+  const flights = safeParse(localStorage.getItem(STORAGE.flights), []);
+  return Array.isArray(flights) ? flights : [];
+}
+
+function defaultFlight() {
+  const settings = loadSettings();
+  const profile = state.profiles[0] || blankProfile();
+  const now = new Date();
+  const rounded = new Date(Math.ceil(now.getTime() / 15 / 60000) * 15 * 60000);
+  return {
+    id: uid(),
+    callsign: profile.registration || '',
+    activeProfileId: profile.id,
+    flightRules: 'VFR',
+    operationType: 'Part 91',
     origin: 'KIND',
-    destination: 'KMIA',
-    alternate: 'KFLL',
-    departureDate: zuluDate,
+    destination: 'KUMP',
+    alternate: 'KHFY',
+    departureDate: now.toISOString().slice(0, 10),
     departureTime: rounded.toISOString().slice(11, 16),
-    cruiseAltitude: 10000,
-    tas: settings.tas,
-    taxiMinutes: 15,
+    cruiseAltitude: 3500,
+    tas: profile.defaults.tas || 105,
+    taxiMinutes: 10,
     route: 'DCT',
-    remarks: 'FLIGHT SIMULATION ONLY',
+    remarks: '',
     windDirection: 270,
-    windSpeed: 20,
-    fuelBurn: settings.fuelBurn,
-    fuelUnit: settings.fuelUnit,
-    reserveMinutes: settings.reserve,
+    windSpeed: 10,
+    fuelBurn: profile.defaults.burn || 9,
+    reserveMinutes: settings.reserveVfrDay,
+    contingencyPercent: settings.defaultContingency,
     extraFuel: 0,
+    load: Object.fromEntries(profile.stations.map(s => [s.id, s.defaultValue || 0])),
+    officialNotamCheck: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
 }
 
-function collectPlan() {
-  return {
-    ...(state.plan || defaultPlan()),
-    callsign: $('#callsign').value.trim().toUpperCase(),
-    aircraft: $('#aircraft').value.trim().toUpperCase(),
-    registration: $('#registration').value.trim().toUpperCase(),
-    flightRules: $('#flightRules').value,
-    origin: $('#origin').value.trim().toUpperCase(),
-    destination: $('#destination').value.trim().toUpperCase(),
-    alternate: $('#alternate').value.trim().toUpperCase(),
-    departureDate: $('#departureDate').value,
-    departureTime: $('#departureTime').value,
-    cruiseAltitude: toNumber($('#cruiseAltitude').value),
-    tas: toNumber($('#tas').value),
-    taxiMinutes: toNumber($('#taxiMinutes').value),
-    route: $('#route').value.trim().toUpperCase(),
-    remarks: $('#remarks').value.trim(),
-    windDirection: toNumber($('#windDirection').value),
-    windSpeed: toNumber($('#windSpeed').value),
-    fuelBurn: toNumber($('#fuelBurn').value),
-    fuelUnit: $('#fuelUnit').value,
-    reserveMinutes: toNumber($('#reserveMinutes').value),
-    extraFuel: toNumber($('#extraFuel').value),
-    updatedAt: new Date().toISOString()
-  };
+function activeProfile() {
+  return state.profiles.find(p => p.id === state.activeProfileId) || state.profiles[0] || null;
 }
 
-function applyPlan(plan) {
-  state.plan = { ...defaultPlan(), ...plan };
-  const mapping = {
-    callsign: '#callsign', aircraft: '#aircraft', registration: '#registration', flightRules: '#flightRules',
-    origin: '#origin', destination: '#destination', alternate: '#alternate', departureDate: '#departureDate',
-    departureTime: '#departureTime', cruiseAltitude: '#cruiseAltitude', tas: '#tas', taxiMinutes: '#taxiMinutes',
-    route: '#route', remarks: '#remarks', windDirection: '#windDirection', windSpeed: '#windSpeed', fuelBurn: '#fuelBurn',
-    fuelUnit: '#fuelUnit', reserveMinutes: '#reserveMinutes', extraFuel: '#extraFuel'
-  };
-  for (const [key, selector] of Object.entries(mapping)) {
-    const element = $(selector);
-    if (element) element.value = state.plan[key] ?? '';
-  }
-  updateStrip();
-  recalculate();
+function editorProfile() {
+  return state.profiles.find(p => p.id === state.editorProfileId) || state.profiles[0] || null;
 }
 
-function validatePlan(plan) {
-  const errors = [];
-  if (!/^[A-Z0-9]{3,4}$/.test(plan.origin)) errors.push('Origin ICAO is invalid.');
-  if (!/^[A-Z0-9]{3,4}$/.test(plan.destination)) errors.push('Destination ICAO is invalid.');
-  if (plan.alternate && !/^[A-Z0-9]{3,4}$/.test(plan.alternate)) errors.push('Alternate ICAO is invalid.');
-  if (!plan.aircraft) errors.push('Aircraft ICAO is required.');
-  if (plan.tas <= 0) errors.push('True airspeed must be greater than zero.');
-  if (plan.origin === plan.destination) errors.push('Origin and destination must be different.');
-  return errors;
+function airportId(item) {
+  return String(item?.icaoId || item?.icao || item?.id || item?.ident || '').toUpperCase();
+}
+
+function airportName(item) {
+  return item?.name || item?.site || item?.facilityName || item?.airportName || 'Airport';
+}
+
+function airportLat(item) {
+  return number(item?.lat ?? item?.latitude ?? item?.latDecimal ?? item?.latitudeDecimal, NaN);
+}
+
+function airportLon(item) {
+  return number(item?.lon ?? item?.longitude ?? item?.lonDecimal ?? item?.longitudeDecimal, NaN);
+}
+
+function airportElev(item) {
+  return number(item?.elev ?? item?.elevation ?? item?.elevFt ?? item?.elevationFt, NaN);
 }
 
 function airportFor(id) {
-  return state.airports[id] || FALLBACK_AIRPORTS[id] || null;
-}
-
-function airportLat(airport) {
-  return toNumber(airport?.lat ?? airport?.latitude, NaN);
-}
-
-function airportLon(airport) {
-  return toNumber(airport?.lon ?? airport?.longitude, NaN);
+  return state.airports[String(id || '').toUpperCase()] || null;
 }
 
 function greatCircle(a, b) {
@@ -260,675 +282,1285 @@ function greatCircle(a, b) {
   const distanceNm = 3440.065 * central;
   const y = Math.sin(dLon) * Math.cos(lat2);
   const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
-  const course = normalizeHeading(Math.atan2(y, x) * 180 / Math.PI);
-  return { distanceNm, course };
+  return { distanceNm, course: normalizeHeading(Math.atan2(y, x) * 180 / Math.PI) };
 }
 
-function calculatePlan(plan) {
-  const origin = airportFor(plan.origin);
-  const destination = airportFor(plan.destination);
-  const nav = greatCircle(origin, destination);
-  if (!nav) return { distanceNm: NaN, course: NaN, groundSpeed: plan.tas, eteHours: NaN, blockHours: NaN, tripFuel: NaN, reserveFuel: NaN, totalFuel: NaN };
-  const windAngle = angularDifference(plan.windDirection, nav.course) * Math.PI / 180;
-  const headwind = plan.windSpeed * Math.cos(windAngle);
-  const crosswind = Math.abs(plan.windSpeed * Math.sin(windAngle));
-  const groundSpeed = clamp(plan.tas - headwind, Math.max(25, plan.tas * 0.35), plan.tas + Math.abs(plan.windSpeed));
-  const eteHours = nav.distanceNm / groundSpeed;
-  const blockHours = eteHours + plan.taxiMinutes / 60;
-  const tripFuel = eteHours * plan.fuelBurn;
-  const reserveFuel = plan.reserveMinutes / 60 * plan.fuelBurn;
-  const taxiFuel = plan.taxiMinutes / 60 * plan.fuelBurn;
-  const totalFuel = tripFuel + reserveFuel + taxiFuel + plan.extraFuel;
-  return { ...nav, groundSpeed, headwind, crosswind, eteHours, blockHours, tripFuel, reserveFuel, taxiFuel, totalFuel };
+function collectFlight() {
+  const prior = state.flight || defaultFlight();
+  return {
+    ...prior,
+    callsign: $('#callsign').value.trim().toUpperCase(),
+    activeProfileId: $('#activeAircraft').value,
+    flightRules: $('#flightRules').value,
+    operationType: $('#operationType').value,
+    origin: $('#origin').value.trim().toUpperCase(),
+    destination: $('#destination').value.trim().toUpperCase(),
+    alternate: $('#alternate').value.trim().toUpperCase(),
+    departureDate: $('#departureDate').value,
+    departureTime: $('#departureTime').value,
+    cruiseAltitude: number($('#cruiseAltitude').value),
+    tas: number($('#tas').value),
+    taxiMinutes: number($('#taxiMinutes').value),
+    route: $('#route').value.trim().toUpperCase(),
+    remarks: $('#remarks').value.trim(),
+    windDirection: number($('#windDirection').value),
+    windSpeed: number($('#windSpeed').value),
+    fuelBurn: number($('#fuelBurn').value),
+    reserveMinutes: number($('#reserveMinutes').value),
+    contingencyPercent: number($('#contingencyPercent').value),
+    extraFuel: number($('#extraFuel').value),
+    updatedAt: new Date().toISOString()
+  };
+}
+
+function applyFlight(flight) {
+  state.flight = { ...defaultFlight(), ...flight };
+  state.activeProfileId = state.flight.activeProfileId || state.profiles[0]?.id || '';
+  $('#callsign').value = state.flight.callsign || '';
+  $('#activeAircraft').value = state.activeProfileId;
+  $('#flightRules').value = state.flight.flightRules || 'VFR';
+  $('#operationType').value = state.flight.operationType || 'Part 91';
+  $('#origin').value = state.flight.origin || '';
+  $('#destination').value = state.flight.destination || '';
+  $('#alternate').value = state.flight.alternate || '';
+  $('#departureDate').value = state.flight.departureDate || '';
+  $('#departureTime').value = state.flight.departureTime || '';
+  $('#cruiseAltitude').value = state.flight.cruiseAltitude || '';
+  $('#tas').value = state.flight.tas || '';
+  $('#taxiMinutes').value = state.flight.taxiMinutes ?? 10;
+  $('#route').value = state.flight.route || '';
+  $('#remarks').value = state.flight.remarks || '';
+  $('#windDirection').value = state.flight.windDirection ?? '';
+  $('#windSpeed').value = state.flight.windSpeed ?? '';
+  $('#fuelBurn').value = state.flight.fuelBurn || '';
+  $('#reserveMinutes').value = state.flight.reserveMinutes ?? 45;
+  $('#contingencyPercent').value = state.flight.contingencyPercent ?? 10;
+  $('#extraFuel').value = state.flight.extraFuel ?? 0;
+  $('#officialBriefReference').value = state.flight.officialNotamCheck?.reference || '';
+  recalculate();
+}
+
+function calculatePlan(flight = state.flight) {
+  const settings = loadSettings();
+  const nav = greatCircle(airportFor(flight.origin), airportFor(flight.destination));
+  const directDistance = nav?.distanceNm ?? NaN;
+  const manualDistance = optionalNumber(settings.manualDistance);
+  const distanceNm = manualDistance && manualDistance > 0 ? manualDistance : directDistance;
+  const course = nav?.course ?? NaN;
+  const angle = angularDifference(flight.windDirection, course) * Math.PI / 180;
+  const headwind = Number.isFinite(course) ? flight.windSpeed * Math.cos(angle) : 0;
+  const groundSpeed = clamp(flight.tas - headwind, Math.max(20, flight.tas * .35), flight.tas + Math.abs(flight.windSpeed));
+  const eteHours = Number.isFinite(distanceNm) && groundSpeed > 0 ? distanceNm / groundSpeed : NaN;
+  const profile = activeProfile();
+  const taxiBurnRate = profile?.defaults?.taxiBurn || flight.fuelBurn;
+  const taxiFuel = flight.taxiMinutes / 60 * taxiBurnRate;
+  const tripFuel = eteHours * flight.fuelBurn;
+  const reserveFuel = flight.reserveMinutes / 60 * flight.fuelBurn;
+  const contingencyFuel = tripFuel * flight.contingencyPercent / 100;
+  const requiredFuel = taxiFuel + tripFuel + reserveFuel + contingencyFuel + flight.extraFuel;
+  return { directDistance, distanceNm, course, headwind, groundSpeed, eteHours, taxiFuel, tripFuel, reserveFuel, contingencyFuel, requiredFuel };
 }
 
 function recalculate() {
-  const plan = collectPlan();
-  state.plan = plan;
-  state.calculations = calculatePlan(plan);
-  renderPlanSummary();
-  renderMapSummary();
-  generateOfp();
-  updateStrip();
-  localStorage.setItem(STORAGE.active, JSON.stringify({ plan: state.plan, airports: state.airports }));
+  state.flight = collectFlight();
+  state.activeProfileId = state.flight.activeProfileId;
+  state.calculations = calculatePlan(state.flight);
+  state.wb = calculateWeightBalance();
+  persistActive();
+  renderTop();
+  renderPlan();
+  renderWeightBalance();
+  renderCompleteness();
 }
 
-function renderPlanSummary() {
-  const plan = state.plan || collectPlan();
-  const calc = state.calculations || calculatePlan(plan);
-  const origin = airportFor(plan.origin);
-  const destination = airportFor(plan.destination);
-  $('#heroOrigin').textContent = plan.origin || '—';
-  $('#heroDestination').textContent = plan.destination || '—';
-  $('#heroOriginName').textContent = origin?.name || 'Airport data not loaded';
-  $('#heroDestinationName').textContent = destination?.name || 'Airport data not loaded';
-  $('#metricDistance').textContent = Number.isFinite(calc.distanceNm) ? Math.round(calc.distanceNm).toLocaleString() : '—';
-  $('#metricCourse').textContent = Number.isFinite(calc.course) ? String(Math.round(calc.course)).padStart(3, '0') : '—';
-  $('#metricEte').textContent = formatDuration(calc.eteHours);
-  $('#metricBlock').textContent = formatDuration(calc.blockHours);
-  $('#metricFuel').textContent = formatFuel(calc.tripFuel);
-  $('#metricFuelUnit').textContent = plan.fuelUnit;
-  $('#calcGroundSpeed').textContent = Number.isFinite(calc.groundSpeed) ? Math.round(calc.groundSpeed) : '—';
-  $('#calcTripFuel').textContent = formatFuel(calc.tripFuel);
-  $('#calcReserveFuel').textContent = formatFuel(calc.reserveFuel);
-  $('#calcTotalFuel').textContent = formatFuel(calc.totalFuel);
-  for (const id of ['calcTripUnit', 'calcReserveUnit', 'calcTotalUnit']) $(id.startsWith('#') ? id : `#${id}`).textContent = plan.fuelUnit;
+function persistActive() {
+  const payload = {
+    flight: state.flight,
+    airports: state.airports,
+    weather: state.weather,
+    hazards: state.hazards,
+    tfrs: state.tfrs,
+    briefingFetchedAt: state.briefingFetchedAt,
+    briefingSources: state.briefingSources,
+    activeProfileId: state.activeProfileId
+  };
+  try { localStorage.setItem(STORAGE.active, JSON.stringify(payload)); } catch { /* local storage may be full */ }
 }
 
-function updateStrip() {
-  const plan = state.plan || collectPlan();
-  $('#stripCallsign').textContent = plan.callsign || plan.registration || '—';
-  $('#stripRoute').textContent = `${plan.origin || '—'} → ${plan.destination || '—'}`;
-  $('#stripAircraft').textContent = plan.aircraft || '—';
-  $('#stripReg').textContent = plan.registration || '—';
+function renderProfileSelect() {
+  $('#activeAircraft').innerHTML = state.profiles.map(p => `<option value="${esc(p.id)}">${esc(p.name)}${p.verified ? '' : ' · UNVERIFIED'}</option>`).join('');
+  $('#activeAircraft').value = state.activeProfileId || state.profiles[0]?.id || '';
 }
 
-function setView(name) {
-  const meta = viewMeta[name] || viewMeta.plan;
-  $$('.view').forEach(el => el.classList.toggle('active', el.dataset.viewPanel === name));
-  $$('[data-view]').forEach(el => el.classList.toggle('active', el.dataset.view === name));
-  $('#viewEyebrow').textContent = meta[0];
-  $('#viewTitle').textContent = meta[1];
-  $('#sidebar').classList.remove('open');
-  if (name === 'map') setTimeout(renderMap, 60);
-  if (name === 'saved') renderSavedPlans();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+function renderTop() {
+  const p = activeProfile();
+  $('#stripCallsign').textContent = state.flight?.callsign || p?.registration || '—';
+  $('#stripRoute').textContent = `${state.flight?.origin || '—'} → ${state.flight?.destination || '—'}`;
+  $('#stripAircraft').textContent = p ? `${p.icao || p.model || 'AIRCRAFT'} · ${p.registration || 'NO REG'}` : '—';
+  const takeoff = state.wb?.phases?.takeoff;
+  $('#stripWb').textContent = takeoff ? (takeoff.ok ? 'WITHIN LIMITS' : 'OUT OF LIMITS') : 'NOT SET';
+  const settings = loadSettings();
+  const briefAge = ageMinutes(state.briefingFetchedAt);
+  $('#stripBrief').textContent = Number.isFinite(briefAge) ? (briefAge <= settings.briefStaleMinutes ? `${Math.round(briefAge)} MIN` : 'STALE') : 'NOT LOADED';
+}
+
+function renderPlan() {
+  const f = state.flight;
+  const c = state.calculations;
+  const p = activeProfile();
+  const origin = airportFor(f.origin);
+  const destination = airportFor(f.destination);
+  $('#heroOrigin').textContent = f.origin || '—';
+  $('#heroDestination').textContent = f.destination || '—';
+  $('#heroOriginName').textContent = origin ? airportName(origin) : 'Airport data not loaded';
+  $('#heroDestinationName').textContent = destination ? airportName(destination) : 'Airport data not loaded';
+  $('#metricDistance').textContent = Number.isFinite(c.distanceNm) ? Math.round(c.distanceNm) : '—';
+  $('#metricCourse').textContent = Number.isFinite(c.course) ? String(Math.round(c.course)).padStart(3, '0') : '—';
+  $('#metricGs').textContent = Number.isFinite(c.groundSpeed) ? Math.round(c.groundSpeed) : '—';
+  $('#metricEte').textContent = formatDuration(c.eteHours);
+  $('#metricFuel').textContent = formatNumber(c.requiredFuel, c.requiredFuel >= 100 ? 0 : 1);
+  const fuelUnit = p?.units?.fuel || 'UNIT';
+  ['metricFuelUnit','fuelTaxiUnit','fuelTripUnit','fuelReserveUnit','fuelRequiredUnit'].forEach(id => $(`#${id}`).textContent = fuelUnit);
+  $('#fuelTaxi').textContent = formatNumber(c.taxiFuel, 1);
+  $('#fuelTrip').textContent = formatNumber(c.tripFuel, 1);
+  $('#fuelReserve').textContent = formatNumber(c.reserveFuel, 1);
+  $('#fuelRequired').textContent = formatNumber(c.requiredFuel, 1);
+}
+
+function routeBbox() {
+  const a = airportFor(state.flight.origin);
+  const b = airportFor(state.flight.destination);
+  if (!a || !b) return null;
+  const latA = airportLat(a), lonA = airportLon(a), latB = airportLat(b), lonB = airportLon(b);
+  if (![latA, lonA, latB, lonB].every(Number.isFinite)) return null;
+  const pad = 2.5;
+  return [Math.min(latA,latB)-pad, Math.min(lonA,lonB)-pad, Math.max(latA,latB)+pad, Math.max(lonA,lonB)+pad].join(',');
+}
+
+async function fetchJson(url) {
+  const response = await fetch(url, { headers: { Accept: 'application/json' } });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || `Request failed (${response.status})`);
+  return data;
 }
 
 async function fetchAirportData(ids) {
-  const unique = [...new Set(ids.filter(Boolean))];
-  if (!unique.length) return;
-  const data = await fetchJson(`/api/airport?ids=${encodeURIComponent(unique.join(','))}`);
+  const clean = [...new Set(ids.filter(Boolean).map(id => id.toUpperCase()))];
+  if (!clean.length) return;
+  const data = await fetchJson(`/api/airport?ids=${encodeURIComponent(clean.join(','))}`);
   for (const airport of data.airports || []) {
-    if (airport?.icaoId) state.airports[String(airport.icaoId).toUpperCase()] = airport;
+    const id = airportId(airport);
+    if (id) state.airports[id] = airport;
   }
-}
-
-function routeBbox(plan) {
-  const a = airportFor(plan.origin);
-  const b = airportFor(plan.destination);
-  if (!a || !b) return null;
-  const lat0 = airportLat(a), lon0 = airportLon(a), lat1 = airportLat(b), lon1 = airportLon(b);
-  if (![lat0, lon0, lat1, lon1].every(Number.isFinite)) return null;
-  const pad = clamp(Math.abs(lat0 - lat1) * .18 + 2.5, 2.5, 8);
-  return [Math.max(-90, Math.min(lat0, lat1) - pad), Math.max(-180, Math.min(lon0, lon1) - pad), Math.min(90, Math.max(lat0, lat1) + pad), Math.min(180, Math.max(lon0, lon1) + pad)];
+  state.briefingSources.airport = { source: data.source, fetchedAt: data.fetchedAt };
 }
 
 async function loadBriefing() {
-  const plan = collectPlan();
-  const errors = validatePlan(plan);
-  if (errors.length) throw new Error(errors.join(' '));
-  state.plan = plan;
-  await fetchAirportData([plan.origin, plan.destination, plan.alternate]);
-  state.calculations = calculatePlan(plan);
-  const ids = [plan.origin, plan.destination, plan.alternate].filter(Boolean).join(',');
-  const bbox = routeBbox(plan);
-  const weatherPromise = fetchJson(`/api/weather?ids=${encodeURIComponent(ids)}`);
-  const hazardsPromise = bbox
-    ? fetchJson(`/api/hazards?bbox=${encodeURIComponent(bbox.join(','))}&level=${encodeURIComponent(plan.cruiseAltitude || 0)}`)
-    : Promise.resolve({ sigmets: [], gairmets: [], pireps: [], fetchedAt: null });
-  const [weather, hazards] = await Promise.all([weatherPromise, hazardsPromise]);
-  state.weather = weather;
-  state.hazards = hazards;
-  state.briefingFetchedAt = weather.fetchedAt || new Date().toISOString();
-  localStorage.setItem(STORAGE.active, JSON.stringify({ plan: state.plan, airports: state.airports, weather: state.weather, hazards: state.hazards, briefingFetchedAt: state.briefingFetchedAt }));
+  state.flight = collectFlight();
+  const ids = [state.flight.origin, state.flight.destination, state.flight.alternate].filter(Boolean);
+  if (ids.length < 2) throw new Error('Enter origin and destination identifiers.');
+  await fetchAirportData(ids);
+  const bbox = routeBbox();
+  if (!bbox) throw new Error('The authoritative airport service did not return usable coordinates for the route.');
+  const joined = encodeURIComponent(ids.join(','));
+  const settled = await Promise.allSettled([
+    fetchJson(`/api/weather?ids=${joined}`),
+    fetchJson(`/api/hazards?bbox=${encodeURIComponent(bbox)}&level=${encodeURIComponent(state.flight.cruiseAltitude || 0)}`),
+    fetchJson(`/api/tfr?bbox=${encodeURIComponent(bbox)}`)
+  ]);
+  const errors = [];
+  if (settled[0].status === 'fulfilled') {
+    const data = settled[0].value;
+    state.weather = { metars: data.metars || [], tafs: data.tafs || [] };
+    state.briefingSources.weather = { source: data.source, fetchedAt: data.fetchedAt };
+  } else errors.push(`Weather: ${settled[0].reason?.message || 'failed'}`);
+  if (settled[1].status === 'fulfilled') {
+    const data = settled[1].value;
+    state.hazards = { sigmets: data.sigmets || [], gairmets: data.gairmets || [], pireps: data.pireps || [] };
+    state.briefingSources.hazards = { source: data.source, fetchedAt: data.fetchedAt };
+  } else errors.push(`Hazards: ${settled[1].reason?.message || 'failed'}`);
+  if (settled[2].status === 'fulfilled') {
+    const data = settled[2].value;
+    state.tfrs = data.tfrs || [];
+    state.briefingSources.tfr = { source: data.source, fetchedAt: data.fetchedAt };
+  } else errors.push(`TFR: ${settled[2].reason?.message || 'failed'}`);
+  state.briefingFetchedAt = new Date().toISOString();
+  state.calculations = calculatePlan(state.flight);
+  state.wb = calculateWeightBalance();
+  persistActive();
   renderAll();
-}
-
-async function buildFlight() {
-  const button = $('#buildButton');
-  setButtonBusy(button, true, 'BUILDING…');
-  try {
-    await loadBriefing();
-    $('#planStatus').textContent = 'BRIEFED';
-    $('#planStatus').className = 'badge good';
-    toast('Flight and briefing built');
-    setView('brief');
-  } catch (error) {
-    $('#planStatus').textContent = 'ERROR';
-    $('#planStatus').className = 'badge bad';
-    toast(error.message);
-  } finally {
-    setButtonBusy(button, false);
-  }
+  if (errors.length) toast(`Briefing loaded with gaps: ${errors.join(' · ')}`);
+  return errors;
 }
 
 function metarFor(id) {
-  return (state.weather.metars || []).find(item => String(item.icaoId).toUpperCase() === id);
-}
-function tafFor(id) {
-  return (state.weather.tafs || []).find(item => String(item.icaoId).toUpperCase() === id);
+  const key = String(id || '').toUpperCase();
+  return state.weather.metars.find(item => String(item?.icaoId || item?.station || item?.id || '').toUpperCase() === key) || null;
 }
 
-function ceilingFromMetar(metar) {
+function tafFor(id) {
+  const key = String(id || '').toUpperCase();
+  return state.weather.tafs.find(item => String(item?.icaoId || item?.station || item?.id || '').toUpperCase() === key) || null;
+}
+
+function cloudCeiling(metar) {
   const clouds = Array.isArray(metar?.clouds) ? metar.clouds : [];
-  const ceilings = clouds.filter(c => ['BKN', 'OVC', 'VV'].includes(String(c.cover).toUpperCase())).map(c => toNumber(c.base, NaN)).filter(Number.isFinite);
-  if (Number.isFinite(Number(metar?.vertVis))) ceilings.push(Number(metar.vertVis));
-  return ceilings.length ? Math.min(...ceilings) : null;
+  const ceiling = clouds.filter(c => ['BKN','OVC','VV'].includes(String(c?.cover || c?.skyCover || '').toUpperCase())).map(c => number(c?.base ?? c?.baseFt, NaN)).filter(Number.isFinite);
+  if (ceiling.length) return Math.min(...ceiling);
+  const raw = String(metar?.rawOb || metar?.rawText || '');
+  const matches = [...raw.matchAll(/(?:BKN|OVC|VV)(\d{3})/g)].map(m => Number(m[1]) * 100);
+  return matches.length ? Math.min(...matches) : Infinity;
+}
+
+function metarVisibility(metar) {
+  const direct = number(metar?.visib ?? metar?.visibility, NaN);
+  if (Number.isFinite(direct)) return direct;
+  const raw = String(metar?.rawOb || metar?.rawText || '');
+  const match = raw.match(/\s(\d+(?:\/\d+)?|\d+\s\d\/\d)SM\s/);
+  if (!match) return NaN;
+  const value = match[1].trim();
+  if (value.includes(' ')) {
+    const [whole, frac] = value.split(' ');
+    const [n,d] = frac.split('/').map(Number);
+    return Number(whole) + n/d;
+  }
+  if (value.includes('/')) {
+    const [n,d] = value.split('/').map(Number);
+    return n/d;
+  }
+  return Number(value);
 }
 
 function weatherCard(role, id) {
   const metar = metarFor(id);
   const taf = tafFor(id);
   const airport = airportFor(id);
-  const category = metar?.fltCat || 'NA';
-  const ceiling = ceilingFromMetar(metar);
-  const wind = metar ? `${metar.wdir ?? 'VRB'}° / ${metar.wspd ?? 0}${metar.wgst ? `G${metar.wgst}` : ''} KT` : '—';
-  const visibility = metar?.visib != null ? `${metar.visib} SM` : '—';
-  const ceilingText = ceiling != null ? `${ceiling.toLocaleString()} FT` : (metar ? 'UNLIMITED' : '—');
-  const altimeter = metar?.altim != null ? `${hpaToInHg(metar.altim)} IN` : '—';
-  const temp = metar?.temp != null ? `${metar.temp}°C / ${metar.dewp ?? '—'}°C` : '—';
+  const rawMetar = metar?.rawOb || metar?.rawText || 'No METAR returned.';
+  const rawTaf = taf?.rawTAF || taf?.rawText || 'No TAF returned.';
+  const category = metar?.fltCat || metar?.flightCategory || 'N/A';
+  const windDir = number(metar?.wdir ?? metar?.windDir, NaN);
+  const windSpeed = number(metar?.wspd ?? metar?.windSpeed, NaN);
+  const gust = number(metar?.wgst ?? metar?.windGust, NaN);
+  const ceiling = cloudCeiling(metar);
+  const visibility = metarVisibility(metar);
+  const catClass = ['VFR'].includes(category) ? 'success' : ['MVFR'].includes(category) ? 'warning' : ['IFR','LIFR'].includes(category) ? 'danger' : 'neutral';
   return `<article class="panel weather-card">
-    <div class="weather-card-top">
-      <div class="weather-station"><span>${esc(role)}</span><strong>${esc(id || '—')}</strong><small>${esc(airport?.name || metar?.name || 'Airport data unavailable')}</small></div>
-      <div class="category ${esc(category)}">${esc(category)}</div>
+    <div class="airport-heading"><div><span class="eyebrow">${esc(role)}</span><h3>${esc(id || '—')}</h3><small>${esc(airport ? airportName(airport) : 'Airport data unavailable')}</small></div><span class="badge ${catClass}">${esc(category)}</span></div>
+    <div class="weather-meta">
+      <div><span>WIND</span><strong>${Number.isFinite(windDir) ? String(Math.round(windDir)).padStart(3,'0') : '—'} / ${Number.isFinite(windSpeed) ? Math.round(windSpeed) : '—'}${Number.isFinite(gust) ? `G${Math.round(gust)}` : ''}</strong></div>
+      <div><span>VIS</span><strong>${Number.isFinite(visibility) ? `${visibility} SM` : '—'}</strong></div>
+      <div><span>CEILING</span><strong>${Number.isFinite(ceiling) ? `${ceiling} FT` : 'NONE'}</strong></div>
+      <div><span>OBS</span><strong>${esc(formatDateTime(metar?.reportTime || metar?.obsTime))}</strong></div>
     </div>
-    <div class="wx-metrics">
-      <div><span>WIND</span><strong>${esc(wind)}</strong></div>
-      <div><span>VIS</span><strong>${esc(visibility)}</strong></div>
-      <div><span>CEILING</span><strong>${esc(ceilingText)}</strong></div>
-      <div><span>ALTIMETER</span><strong>${esc(altimeter)}</strong></div>
-      <div><span>TEMP / DEW</span><strong>${esc(temp)}</strong></div>
-      <div><span>OBS TIME</span><strong>${esc(formatDateTime(metar?.obsTime))}</strong></div>
-    </div>
-    <details class="raw-weather"><summary>RAW METAR / TAF</summary><pre>${esc(metar?.rawOb || 'NO METAR AVAILABLE')}\n\n${esc(taf?.rawTAF || 'NO TAF AVAILABLE')}</pre></details>
+    <div class="raw-weather">${esc(rawMetar)}</div>
+    <div class="raw-weather">${esc(rawTaf)}</div>
   </article>`;
 }
 
 function renderWeather() {
-  const plan = state.plan;
-  if (!plan) return;
-  const stations = [['DEPARTURE', plan.origin], ['DESTINATION', plan.destination]];
-  if (plan.alternate) stations.push(['ALTERNATE', plan.alternate]);
-  $('#weatherGrid').innerHTML = stations.map(([role, id]) => weatherCard(role, id)).join('');
-  $('#briefUpdated').textContent = state.briefingFetchedAt ? `UPDATED ${formatDateTime(state.briefingFetchedAt)}` : 'NOT LOADED';
+  const f = state.flight;
+  $('#weatherGrid').innerHTML = [
+    weatherCard('DEPARTURE', f.origin),
+    weatherCard('DESTINATION', f.destination),
+    weatherCard('ALTERNATE', f.alternate)
+  ].join('');
 }
 
-function operationalAlerts() {
-  const plan = state.plan;
-  if (!plan) return [];
-  const alerts = [];
-  for (const [role, id] of [['Departure', plan.origin], ['Destination', plan.destination], ['Alternate', plan.alternate]]) {
-    if (!id) continue;
-    const metar = metarFor(id);
-    const taf = tafFor(id);
-    if (!metar) {
-      alerts.push({ level: 'warn', title: `${role} METAR unavailable`, detail: `${id} returned no current observation.` });
-      continue;
-    }
-    if (['IFR', 'LIFR'].includes(metar.fltCat)) alerts.push({ level: metar.fltCat === 'LIFR' ? 'bad' : 'warn', title: `${role} ${metar.fltCat}`, detail: `${id} is reporting ${metar.fltCat} conditions with ${metar.visib ?? 'unknown'} SM visibility and ${ceilingFromMetar(metar) ?? 'unknown'} ft ceiling.` });
-    if (toNumber(metar.wgst) >= 25) alerts.push({ level: 'warn', title: `${role} gusts`, detail: `${id} is reporting gusts to ${metar.wgst} kt.` });
-    if (String(metar.wxString || '').match(/TS|FZ|SN|GR|SQ|FC/)) alerts.push({ level: 'bad', title: `${role} significant weather`, detail: `${id} reports ${metar.wxString}.` });
-    if (!taf) alerts.push({ level: 'warn', title: `${role} TAF unavailable`, detail: `${id} returned no terminal forecast.` });
-    else if (String(taf.rawTAF || '').match(/TSRA|\bTS\b|FZRA|\+SN|\bWS\d{3}/)) alerts.push({ level: 'warn', title: `${role} TAF contains hazards`, detail: `${id} forecast includes thunderstorms, freezing precipitation, heavy snow or low-level wind shear terminology.` });
-  }
-  if ((state.hazards.sigmets || []).length) alerts.push({ level: 'bad', title: 'SIGMETs near route box', detail: `${state.hazards.sigmets.length} current domestic SIGMET item(s) intersect or lack precise coordinates within the route search area.` });
-  const significantPireps = (state.hazards.pireps || []).filter(p => String(p.tbInt1 || p.icgInt1 || '').match(/MOD|SEV|EXTM/));
-  if (significantPireps.length) alerts.push({ level: 'warn', title: 'Significant PIREPs', detail: `${significantPireps.length} moderate-or-greater turbulence or icing report(s) were returned in the route box.` });
-  if (!alerts.length) alerts.push({ level: 'good', title: 'No automatic red flags', detail: 'The automated scan found no low-category terminal weather or significant coded route alert. Review the complete raw briefing.' });
-  return alerts;
+function hazardDescription(item) {
+  return item?.rawAirSigmet || item?.rawOb || item?.rawText || item?.hazard || item?.phenom || item?.description || item?.text || JSON.stringify(item);
 }
 
-function renderOperationalAlerts() {
-  const alerts = operationalAlerts();
-  $('#alertCount').textContent = alerts.filter(a => a.level !== 'good').length;
-  $('#operationalAlerts').classList.remove('empty-state');
-  $('#operationalAlerts').innerHTML = alerts.map(a => `<div class="alert-item ${a.level}"><div class="alert-symbol">${a.level === 'good' ? '✓' : a.level === 'bad' ? '!' : '△'}</div><div><strong>${esc(a.title)}</strong><p>${esc(a.detail)}</p></div></div>`).join('');
-  const worst = alerts.some(a => a.level === 'bad') ? 'danger' : alerts.some(a => a.level === 'warn') ? 'warning' : 'info';
-  const count = alerts.filter(a => a.level !== 'good').length;
-  $('#alertBanner').className = `notice ${worst}`;
-  $('#alertBanner').innerHTML = `<strong>${count ? `${count} briefing item${count === 1 ? '' : 's'} need attention` : 'Automated scan complete'}</strong><span>Review raw METARs, TAFs, advisories and PIREPs before starting the simulator flight.</span>`;
-}
-
-function runwayNames(airport) {
-  const result = [];
-  for (const runway of Array.isArray(airport?.runways) ? airport.runways : []) {
-    const text = String(runway.runway || runway.ident || runway.id || runway.rwy || '').toUpperCase();
-    for (const name of text.split(/[\/\s-]+/)) if (/^(0[1-9]|[12]\d|3[0-6])[LCR]?$/.test(name)) result.push({ name, detail: runway.dimension || runway.dim || runway.length || '' });
-  }
-  return [...new Map(result.map(item => [item.name, item])).values()];
-}
-
-function runwayHeading(name) {
-  const number = Number(String(name).slice(0, 2));
-  return number === 36 ? 360 : number * 10;
-}
-
-function runwayWindData(id) {
-  const airport = airportFor(id);
-  const metar = metarFor(id);
-  const speed = toNumber(metar?.wspd, NaN);
-  const direction = Number(metar?.wdir);
-  if (!airport || !Number.isFinite(speed) || !Number.isFinite(direction)) return [];
-  return runwayNames(airport).map(runway => {
-    const heading = runwayHeading(runway.name);
-    const angle = angularDifference(direction, heading) * Math.PI / 180;
-    const headwind = speed * Math.cos(angle);
-    const crosswind = speed * Math.sin(angle);
-    return { ...runway, heading, headwind, crosswind, score: headwind - Math.abs(crosswind) * 0.2 };
-  }).sort((a, b) => b.score - a.score);
-}
-
-function renderRunwayWind() {
-  const rows = [];
-  for (const [label, id] of [['DEP', state.plan?.origin], ['DEST', state.plan?.destination]]) {
-    if (!id) continue;
-    const best = runwayWindData(id)[0];
-    if (!best) continue;
-    rows.push(`<div class="runway-card"><div><strong>${esc(label)} ${esc(id)} RWY ${esc(best.name)}</strong><small>${esc(best.detail || `Heading ${best.heading}°`)}</small></div><div class="wind-number"><span>HEADWIND</span><b>${Math.round(best.headwind)} KT</b></div><div class="wind-number"><span>CROSSWIND</span><b>${Math.round(Math.abs(best.crosswind))} KT</b></div><div class="wind-number"><span>SIDE</span><b>${best.crosswind > 0 ? 'RIGHT' : 'LEFT'}</b></div></div>`);
-  }
-  $('#runwayWind').classList.toggle('empty-state', !rows.length);
-  $('#runwayWind').innerHTML = rows.length ? rows.join('') : 'Airport runway and numeric wind data are required.';
-}
-
-function hazardItems() {
-  const sigmets = (state.hazards.sigmets || []).map(item => ({ type: 'sigmet', label: item.seriesId || item.alphaChar || 'SIGMET', hazard: item.hazard || 'SIGMET', time: item.validTimeTo, text: item.rawAirSigmet || `${item.qualifier || ''} ${item.hazard || ''}`.trim() }));
-  const gairmets = (state.hazards.gairmets || []).map(item => ({ type: 'gairmet', label: `${item.product || 'G-AIRMET'} ${item.tag || ''}`.trim(), hazard: item.hazard || item.due_to || 'ADVISORY', time: item.validTime || item.expireTime, text: item.due_to || `${item.hazard || 'G-AIRMET'} forecast hour ${item.forecastHour ?? 0}` }));
-  const pireps = (state.hazards.pireps || []).map(item => ({ type: 'pirep', label: `${item.icaoId || 'PIREP'} ${item.acType || ''}`.trim(), hazard: item.tbInt1 || item.icgInt1 || item.wxString || 'PIREP', time: item.obsTime, text: item.rawOb || item.rawPirep || [item.fltLvl ? `FL${item.fltLvl}` : '', item.tbInt1 ? `TB ${item.tbInt1} ${item.tbType1 || ''}` : '', item.icgInt1 ? `ICG ${item.icgInt1} ${item.icgType1 || ''}` : '', item.wxString || ''].filter(Boolean).join(' / ') }));
-  return [...sigmets, ...gairmets, ...pireps];
+function hazardTitle(item, type) {
+  const label = item?.hazard || item?.phenom || item?.airSigmetType || item?.reportType || item?.type || type.toUpperCase();
+  const id = item?.airSigmetId || item?.icaoId || item?.id || item?.station || '';
+  return `${label}${id ? ` · ${id}` : ''}`;
 }
 
 function renderHazards() {
-  const items = hazardItems().filter(item => state.hazardFilter === 'all' || item.type === state.hazardFilter);
-  $('#hazardList').classList.toggle('empty-state', !items.length);
-  $('#hazardList').innerHTML = items.length ? items.map(item => `<div class="hazard-item ${item.type}"><div class="hazard-meta"><span>${esc(item.type.toUpperCase())}</span><strong>${esc(item.label)}</strong><span>${esc(item.hazard)}</span><span>${esc(formatDateTime(item.time))}</span></div><p>${esc(item.text || 'No decoded text available.')}</p></div>`).join('') : 'No matching route hazards were returned.';
+  const groups = [
+    ...state.hazards.sigmets.map(item => ({ type: 'sigmet', item })),
+    ...state.hazards.gairmets.map(item => ({ type: 'gairmet', item })),
+    ...state.hazards.pireps.map(item => ({ type: 'pirep', item }))
+  ].filter(entry => state.hazardFilter === 'all' || entry.type === state.hazardFilter);
+  $('#hazardList').innerHTML = groups.length ? groups.slice(0, 80).map(({type,item}) => `<div class="data-item ${type === 'sigmet' ? 'danger' : type === 'gairmet' ? 'warning' : ''}"><strong>${esc(hazardTitle(item,type))}</strong><p>${esc(hazardDescription(item))}</p><div class="meta"><span>${esc(type.toUpperCase())}</span><span>${esc(formatDateTime(item?.validTimeFrom || item?.issueTime || item?.reportTime || item?.obsTime))}</span></div></div>`).join('') : '<div class="data-item"><strong>No matching products returned</strong><p>This is not proof that no hazard exists. Confirm coverage and source availability.</p></div>';
 }
 
-function initMap() {
-  if (state.map || !window.L) return;
-  state.map = L.map('routeMap', { zoomControl: true, attributionControl: true }).setView([39, -96], 4);
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 18,
-    attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(state.map);
+function renderTfrs() {
+  $('#tfrList').innerHTML = state.tfrs.length ? state.tfrs.slice(0, 80).map(tfr => `<div class="data-item danger"><strong>${esc(tfr.notam || 'FAA TFR')} · ${esc(tfr.location || tfr.state || '')}</strong><p>${esc(tfr.description || tfr.type || 'Open the FAA detail for controlling text and applicability.')}</p><div class="meta"><span>${esc(tfr.effective || 'EFFECTIVE TIME IN DETAIL')}</span><span>${esc(tfr.expires || '')}</span>${tfr.detailUrl ? `<a href="${esc(tfr.detailUrl)}" target="_blank" rel="noopener">FAA DETAIL</a>` : ''}</div></div>`).join('') : '<div class="data-item"><strong>No route-area TFR items returned</strong><p>Always verify the controlling FAA TFR and NOTAM text, including stadium and national-security restrictions.</p></div>';
 }
 
-function clearMapLayers() {
-  if (!state.map) return;
-  for (const layer of state.mapLayers) state.map.removeLayer(layer);
-  state.mapLayers = [];
+function calculateWindForRunway(metar, runwayHeading) {
+  const windDir = number(metar?.wdir ?? metar?.windDir, NaN);
+  const windSpeed = number(metar?.wspd ?? metar?.windSpeed, NaN);
+  const gust = number(metar?.wgst ?? metar?.windGust, windSpeed);
+  if (![windDir, windSpeed, runwayHeading].every(Number.isFinite)) return null;
+  const angle = angularDifference(windDir, runwayHeading) * Math.PI / 180;
+  return { headwind: gust * Math.cos(angle), crosswind: Math.abs(gust * Math.sin(angle)), gustSpread: Math.max(0, gust - windSpeed) };
 }
 
-function renderMap() {
-  initMap();
-  if (!state.map) {
-    $('#mapFallback').textContent = 'Map library unavailable. Route calculations remain available.';
-    return;
+function personalAlerts() {
+  const settings = loadSettings();
+  const alerts = [];
+  const minCeiling = state.flight.flightRules === 'VFR' ? settings.minCeilingVfr : settings.minCeilingIfr;
+  const minVisibility = state.flight.flightRules === 'VFR' ? settings.minVisibilityVfr : settings.minVisibilityIfr;
+  for (const [role,id] of [['Departure',state.flight.origin],['Destination',state.flight.destination],['Alternate',state.flight.alternate]]) {
+    if (!id) continue;
+    const metar = metarFor(id);
+    if (!metar) { alerts.push({ level: 'warning', title: `${role} ${id}: no METAR`, text: 'Verify whether the airport reports weather and obtain nearby/area observations.' }); continue; }
+    const ceiling = cloudCeiling(metar);
+    const visibility = metarVisibility(metar);
+    const gustSpread = Math.max(0, number(metar?.wgst, number(metar?.wspd)) - number(metar?.wspd));
+    if (Number.isFinite(ceiling) && ceiling < minCeiling) alerts.push({ level:'danger', title:`${role} ceiling below personal minimum`, text:`${ceiling} ft reported; threshold ${minCeiling} ft.` });
+    if (Number.isFinite(visibility) && visibility < minVisibility) alerts.push({ level:'danger', title:`${role} visibility below personal minimum`, text:`${visibility} SM reported; threshold ${minVisibility} SM.` });
+    if (gustSpread > settings.maxGustSpread) alerts.push({ level:'warning', title:`${role} gust spread`, text:`${gustSpread} kt exceeds the configured ${settings.maxGustSpread} kt threshold.` });
   }
-  setTimeout(() => state.map.invalidateSize(), 30);
-  clearMapLayers();
-  const plan = state.plan;
-  const a = airportFor(plan?.origin);
-  const b = airportFor(plan?.destination);
-  if (!a || !b) {
-    $('#mapFallback').style.display = 'grid';
-    return;
+  if (state.hazards.sigmets.length) alerts.push({ level:'danger', title:'SIGMET products in route-area query', text:`${state.hazards.sigmets.length} product(s) returned. Review exact geometry, altitude, validity and movement.` });
+  if (state.tfrs.length) alerts.push({ level:'danger', title:'TFR products in route-area query', text:`${state.tfrs.length} item(s) returned. Open controlling FAA details.` });
+  if (!state.flight.officialNotamCheck) alerts.push({ level:'danger', title:'Official NOTAM check not recorded', text:'Use FAA NOTAM Search or Flight Service and record the time/reference.' });
+  if (!alerts.length) alerts.push({ level:'success', title:'No configured minima alerts triggered', text:'This is not a clearance or an assurance that conditions are acceptable.' });
+  return alerts;
+}
+
+function renderAlerts() {
+  $('#alertList').innerHTML = personalAlerts().map(a => `<div class="data-item ${a.level}"><strong>${esc(a.title)}</strong><p>${esc(a.text)}</p></div>`).join('');
+}
+
+function renderBriefingHeader() {
+  const settings = loadSettings();
+  const age = ageMinutes(state.briefingFetchedAt);
+  $('#briefUpdated').textContent = Number.isFinite(age) ? `UPDATED ${Math.round(age)} MIN AGO` : 'NOT LOADED';
+  const banner = $('#briefBanner');
+  if (!state.briefingFetchedAt) {
+    banner.className = 'notice info';
+    banner.innerHTML = '<strong>No live briefing loaded</strong><span>Build the flight to retrieve FAA Aviation Weather Center and FAA TFR data.</span>';
+  } else if (age > settings.briefStaleMinutes) {
+    banner.className = 'notice danger';
+    banner.innerHTML = `<strong>Briefing is stale</strong><span>Loaded ${Math.round(age)} minutes ago; configured limit is ${settings.briefStaleMinutes} minutes.</span>`;
+  } else {
+    banner.className = 'notice success';
+    banner.innerHTML = `<strong>Embedded source data loaded</strong><span>Retrieved ${formatDateTime(state.briefingFetchedAt)}. Complete the official NOTAM / Flight Service gate below.</span>`;
   }
-  $('#mapFallback').style.display = 'none';
-  const aLatLng = [airportLat(a), airportLon(a)], bLatLng = [airportLat(b), airportLon(b)];
-  if (![...aLatLng, ...bLatLng].every(Number.isFinite)) return;
-  const markerA = L.circleMarker(aLatLng, { radius: 7, color: '#63d6ff', weight: 2, fillColor: '#0d2634', fillOpacity: 1 }).bindTooltip(`${plan.origin} — ${a.name || ''}`);
-  const markerB = L.circleMarker(bLatLng, { radius: 7, color: '#63d6ff', weight: 2, fillColor: '#0d2634', fillOpacity: 1 }).bindTooltip(`${plan.destination} — ${b.name || ''}`);
-  const line = L.polyline([aLatLng, bLatLng], { color: '#63d6ff', weight: 3, opacity: .85, dashArray: '8 8' });
-  markerA.addTo(state.map); markerB.addTo(state.map); line.addTo(state.map);
-  state.mapLayers.push(markerA, markerB, line);
-  if (plan.alternate) {
-    const alt = airportFor(plan.alternate);
-    if (alt && [airportLat(alt), airportLon(alt)].every(Number.isFinite)) {
-      const altLine = L.polyline([bLatLng, [airportLat(alt), airportLon(alt)]], { color: '#ffc56e', weight: 2, opacity: .8, dashArray: '5 8' });
-      const altMarker = L.circleMarker([airportLat(alt), airportLon(alt)], { radius: 5, color: '#ffc56e', fillColor: '#33240c', fillOpacity: 1 }).bindTooltip(`${plan.alternate} — alternate`);
-      altLine.addTo(state.map); altMarker.addTo(state.map); state.mapLayers.push(altLine, altMarker);
+  const check = state.flight.officialNotamCheck;
+  $('#notamBadge').className = `badge ${check ? 'success' : 'warning'}`;
+  $('#notamBadge').textContent = check ? 'RECORDED' : 'REQUIRED';
+  $('#notamRecord').textContent = check ? `Recorded ${formatDateTime(check.time)}${check.reference ? ` · ${check.reference}` : ''}` : 'No official NOTAM check recorded for this flight.';
+}
+
+function renderSources() {
+  const chips = [
+    ['AIRPORT', state.briefingSources.airport?.source || 'FAA AWC airport service', state.briefingSources.airport?.fetchedAt],
+    ['WEATHER', state.briefingSources.weather?.source || 'FAA Aviation Weather Center', state.briefingSources.weather?.fetchedAt],
+    ['HAZARDS', state.briefingSources.hazards?.source || 'FAA Aviation Weather Center', state.briefingSources.hazards?.fetchedAt],
+    ['TFR', state.briefingSources.tfr?.source || 'FAA Graphic TFR', state.briefingSources.tfr?.fetchedAt],
+    ['NOTAM', 'FAA NOTAM Search / Flight Service', state.flight.officialNotamCheck?.time]
+  ];
+  $('#sourceRibbon').innerHTML = chips.map(([name,source,time]) => `<div class="source-chip"><strong>${esc(name)}</strong><span>${esc(source)}${time ? ` · ${esc(formatDateTime(time))}` : ' · NOT LOADED'}</span></div>`).join('');
+}
+
+function fuelWeight(profile, quantity) {
+  const unit = profile?.units?.fuel || 'GAL';
+  if (['LB','KG'].includes(unit)) return quantity;
+  return quantity * number(profile?.fuelDensity, 0);
+}
+
+function stationInputWeight(profile, station, value) {
+  return station.type === 'fuel' ? fuelWeight(profile, value) : value;
+}
+
+function envelopeBounds(profile, weight) {
+  const points = [...(profile?.envelope || [])].filter(p => p.weight > 0).sort((a,b) => a.weight - b.weight);
+  if (!points.length || !Number.isFinite(weight)) return null;
+  if (weight < points[0].weight || weight > points.at(-1).weight) return null;
+  const exact = points.find(p => p.weight === weight);
+  if (exact) return { forward: exact.forward, aft: exact.aft };
+  for (let i = 0; i < points.length - 1; i++) {
+    const a = points[i], b = points[i+1];
+    if (weight >= a.weight && weight <= b.weight) {
+      const t = (weight - a.weight) / (b.weight - a.weight || 1);
+      return { forward: a.forward + t * (b.forward - a.forward), aft: a.aft + t * (b.aft - a.aft) };
     }
   }
-  state.map.fitBounds(line.getBounds().pad(.2), { maxZoom: 7 });
+  return null;
 }
 
-function renderMapSummary() {
-  const plan = state.plan || collectPlan();
-  const calc = state.calculations || calculatePlan(plan);
-  const values = [
-    ['ORIGIN', `${plan.origin || '—'} ${airportFor(plan.origin)?.name ? `— ${airportFor(plan.origin).name}` : ''}`],
-    ['DESTINATION', `${plan.destination || '—'} ${airportFor(plan.destination)?.name ? `— ${airportFor(plan.destination).name}` : ''}`],
-    ['DISTANCE', Number.isFinite(calc.distanceNm) ? `${Math.round(calc.distanceNm).toLocaleString()} NM` : '—'],
-    ['INITIAL COURSE', Number.isFinite(calc.course) ? `${String(Math.round(calc.course)).padStart(3, '0')}°T` : '—'],
-    ['CRUISE', plan.cruiseAltitude ? `${Number(plan.cruiseAltitude).toLocaleString()} FT` : '—'],
-    ['EST GS', Number.isFinite(calc.groundSpeed) ? `${Math.round(calc.groundSpeed)} KT` : '—']
-  ];
-  $('#mapSummary').innerHTML = values.map(([label, value]) => `<div><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`).join('');
+function phaseStatus(profile, name, weight, moment, maxWeight) {
+  const cg = weight > 0 ? moment / weight : NaN;
+  const bounds = envelopeBounds(profile, weight);
+  const issues = [];
+  if (!(weight > 0)) issues.push(`${name}: weight is not defined.`);
+  if (maxWeight > 0 && weight > maxWeight + .01) issues.push(`${name}: ${formatNumber(weight,1)} exceeds limit ${formatNumber(maxWeight,1)}.`);
+  if (!bounds) issues.push(`${name}: weight is outside or not covered by the entered envelope.`);
+  else if (cg < bounds.forward - .0001 || cg > bounds.aft + .0001) issues.push(`${name}: CG ${formatNumber(cg,2)} is outside ${formatNumber(bounds.forward,2)}–${formatNumber(bounds.aft,2)}.`);
+  return { name, weight, moment, cg, bounds, issues, ok: issues.length === 0 };
 }
 
-function generateOfp() {
-  const plan = state.plan || collectPlan();
-  const calc = state.calculations || calculatePlan(plan);
-  const now = new Date().toISOString();
-  const metarLines = [plan.origin, plan.destination, plan.alternate].filter(Boolean).map(id => `${id}  ${metarFor(id)?.rawOb || 'NO METAR'}`);
-  const tafLines = [plan.origin, plan.destination, plan.alternate].filter(Boolean).map(id => `${id}  ${tafFor(id)?.rawTAF || 'NO TAF'}`);
-  const alerts = operationalAlerts().map(a => `${a.level === 'bad' ? 'RED' : a.level === 'warn' ? 'AMBER' : 'INFO'}  ${a.title}: ${a.detail}`);
-  const hazardSummary = hazardItems().slice(0, 30).map(item => `${item.type.toUpperCase()}  ${item.label}  ${item.hazard}  ${formatDateTime(item.time)}\n${item.text}`);
-  const departureZulu = `${plan.departureDate || '----/--/--'} ${plan.departureTime || '--:--'}Z`;
-  const ofp = [
-    'AEROBRIEF SIMULATOR OPERATIONAL FLIGHT PLAN',
-    '============================================================',
-    `GENERATED     ${now}`,
-    `FLIGHT        ${plan.callsign || plan.registration || 'N/A'}`,
-    `AIRCRAFT      ${plan.aircraft || 'N/A'}   REG ${plan.registration || 'N/A'}`,
-    `RULES         ${plan.flightRules}`,
-    `ROUTE         ${plan.origin || '----'} → ${plan.destination || '----'}   ALT ${plan.alternate || 'NONE'}`,
-    `SCHEDULE      ${departureZulu}`,
-    '',
-    'PLANNING SUMMARY',
-    '------------------------------------------------------------',
-    `DISTANCE      ${Number.isFinite(calc.distanceNm) ? `${Math.round(calc.distanceNm)} NM` : 'N/A'}`,
-    `INITIAL CRS   ${Number.isFinite(calc.course) ? `${String(Math.round(calc.course)).padStart(3, '0')} TRUE` : 'N/A'}`,
-    `CRUISE ALT    ${plan.cruiseAltitude ? `${Number(plan.cruiseAltitude).toLocaleString()} FT` : 'N/A'}`,
-    `TAS / EST GS  ${plan.tas || 'N/A'} KT / ${Number.isFinite(calc.groundSpeed) ? `${Math.round(calc.groundSpeed)} KT` : 'N/A'}`,
-    `ETE / BLOCK   ${formatDuration(calc.eteHours)} / ${formatDuration(calc.blockHours)}`,
-    `ROUTE STRING  ${plan.route || 'DCT'}`,
-    '',
-    'FUEL PLAN',
-    '------------------------------------------------------------',
-    `BURN RATE     ${plan.fuelBurn || 0} ${plan.fuelUnit}/HR`,
-    `TAXI          ${formatFuel(calc.taxiFuel)} ${plan.fuelUnit}`,
-    `TRIP          ${formatFuel(calc.tripFuel)} ${plan.fuelUnit}`,
-    `RESERVE       ${formatFuel(calc.reserveFuel)} ${plan.fuelUnit} (${plan.reserveMinutes} MIN)`,
-    `EXTRA         ${formatFuel(plan.extraFuel)} ${plan.fuelUnit}`,
-    `TOTAL         ${formatFuel(calc.totalFuel)} ${plan.fuelUnit}`,
-    '',
-    'TERMINAL WEATHER — METAR',
-    '------------------------------------------------------------',
-    ...(metarLines.length ? metarLines : ['NOT LOADED']),
-    '',
-    'TERMINAL WEATHER — TAF',
-    '------------------------------------------------------------',
-    ...(tafLines.length ? tafLines : ['NOT LOADED']),
-    '',
-    'AUTOMATED OPERATIONAL SCAN',
-    '------------------------------------------------------------',
-    ...(alerts.length ? alerts : ['NOT LOADED']),
-    '',
-    'ROUTE HAZARDS / PIREPS',
-    '------------------------------------------------------------',
-    ...(hazardSummary.length ? hazardSummary : ['NO ITEMS LOADED']),
-    '',
-    'REMARKS',
-    '------------------------------------------------------------',
-    plan.remarks || 'NONE',
-    '',
-    'SIMULATION USE ONLY — NOT FOR REAL-WORLD FLIGHT OPERATIONS'
-  ].join('\n');
-  $('#ofpText').textContent = state.importedOfpText || ofp;
-  return ofp;
-}
-
-function deep(obj, ...paths) {
-  for (const path of paths) {
-    const value = path.split('.').reduce((acc, key) => acc?.[key], obj);
-    if (value !== undefined && value !== null && value !== '') return value;
-  }
-  return '';
-}
-
-function parseSimBrief(ofp) {
-  const airline = String(deep(ofp, 'general.icao_airline', 'general.icao_airline_code', 'general.airline') || '').toUpperCase();
-  const flightNumber = String(deep(ofp, 'general.flight_number', 'general.fltnum') || '');
-  const rawTime = String(deep(ofp, 'times.sched_out', 'times.est_out') || '');
-  let departureDate = state.plan?.departureDate;
-  let departureTime = state.plan?.departureTime;
-  if (/^\d{10,13}$/.test(rawTime)) {
-    const epoch = Number(rawTime) * (rawTime.length === 10 ? 1000 : 1);
-    const date = new Date(epoch);
-    if (!Number.isNaN(date.getTime())) { departureDate = date.toISOString().slice(0, 10); departureTime = date.toISOString().slice(11, 16); }
-  }
-  const plan = {
-    ...(state.plan || defaultPlan()),
-    callsign: String(deep(ofp, 'atc.callsign', 'general.callsign') || `${airline}${flightNumber}`).toUpperCase(),
-    aircraft: String(deep(ofp, 'aircraft.icaocode', 'aircraft.icao_code', 'aircraft.icao') || state.plan?.aircraft || '').toUpperCase(),
-    registration: String(deep(ofp, 'aircraft.reg', 'aircraft.registration') || state.plan?.registration || '').toUpperCase(),
-    origin: String(deep(ofp, 'origin.icao_code', 'origin.icao') || '').toUpperCase(),
-    destination: String(deep(ofp, 'destination.icao_code', 'destination.icao') || '').toUpperCase(),
-    alternate: String(deep(ofp, 'alternate.icao_code', 'alternate.icao') || '').toUpperCase(),
-    route: String(deep(ofp, 'general.route', 'general.route_ifps') || 'DCT').toUpperCase(),
-    cruiseAltitude: toNumber(deep(ofp, 'general.initial_altitude', 'general.cruise_altitude'), state.plan?.cruiseAltitude || 0),
-    departureDate, departureTime,
-    remarks: String(deep(ofp, 'general.manual_rmk', 'general.remarks') || state.plan?.remarks || ''),
-    updatedAt: new Date().toISOString()
+function calculateWeightBalance() {
+  const profile = activeProfile();
+  const flight = state.flight;
+  if (!profile || !flight) return null;
+  const load = flight.load || {};
+  const rows = profile.stations.map(station => {
+    const input = number(load[station.id], station.defaultValue || 0);
+    const weight = stationInputWeight(profile, station, input);
+    return { station, input, weight, moment: weight * number(station.arm) };
+  });
+  const emptyMoment = profile.emptyWeight * profile.emptyArm;
+  const allWeight = rows.reduce((sum,row) => sum + row.weight, profile.emptyWeight);
+  const allMoment = rows.reduce((sum,row) => sum + row.moment, emptyMoment);
+  const fuelRows = rows.filter(row => row.station.type === 'fuel');
+  const fuelWeightTotal = fuelRows.reduce((sum,row) => sum + row.weight, 0);
+  const fuelMomentTotal = fuelRows.reduce((sum,row) => sum + row.moment, 0);
+  const zeroFuelWeight = allWeight - fuelWeightTotal;
+  const zeroFuelMoment = allMoment - fuelMomentTotal;
+  const fuelArm = fuelWeightTotal > 0 ? fuelMomentTotal / fuelWeightTotal : 0;
+  const taxiFuelWeight = fuelWeight(profile, state.calculations.taxiFuel || 0);
+  const tripFuelWeight = fuelWeight(profile, state.calculations.tripFuel || 0);
+  const takeoffWeight = allWeight - taxiFuelWeight;
+  const takeoffMoment = allMoment - taxiFuelWeight * fuelArm;
+  const landingWeight = takeoffWeight - tripFuelWeight;
+  const landingMoment = takeoffMoment - tripFuelWeight * fuelArm;
+  const phases = {
+    zeroFuel: phaseStatus(profile, 'Zero fuel', zeroFuelWeight, zeroFuelMoment, profile.limits.maxZeroFuel),
+    ramp: phaseStatus(profile, 'Ramp', allWeight, allMoment, profile.limits.maxRamp),
+    takeoff: phaseStatus(profile, 'Takeoff', takeoffWeight, takeoffMoment, profile.limits.maxTakeoff),
+    landing: phaseStatus(profile, 'Landing', landingWeight, landingMoment, profile.limits.maxLanding)
   };
-  const text = deep(ofp, 'text.plan', 'text.plan_html', 'text.ofp', 'general.ofp_text');
-  return { plan, text: typeof text === 'string' ? text.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+\n/g, '\n').trim() : '' };
+  const issues = [];
+  if (!profile.verified) issues.push('Aircraft profile is not marked verified against current aircraft records and POH/AFM.');
+  if (!(profile.emptyWeight > 0) || !(profile.emptyArm > 0)) issues.push('Empty weight and arm are incomplete.');
+  if (!profile.envelope.length) issues.push('No CG envelope is entered.');
+  for (const row of rows) {
+    if (row.station.max > 0 && row.input > row.station.max + .001) issues.push(`${row.station.name}: input ${formatNumber(row.input,1)} exceeds station limit ${formatNumber(row.station.max,1)}.`);
+  }
+  if (profile.limits.usableFuel > 0) {
+    const fuelQuantity = fuelRows.reduce((sum,row) => sum + row.input, 0);
+    if (fuelQuantity > profile.limits.usableFuel + .001) issues.push(`Fuel input ${formatNumber(fuelQuantity,1)} exceeds usable fuel ${formatNumber(profile.limits.usableFuel,1)}.`);
+    if (state.calculations.requiredFuel > fuelQuantity + .001) issues.push(`Planned fuel ${formatNumber(fuelQuantity,1)} is below calculated required fuel ${formatNumber(state.calculations.requiredFuel,1)}.`);
+  }
+  if (landingWeight <= zeroFuelWeight) issues.push('Calculated landing fuel is zero or negative.');
+  Object.values(phases).forEach(phase => issues.push(...phase.issues));
+  return { rows, phases, issues, ok: profile.verified && issues.length === 0, fuelArm, zeroFuelWeight };
 }
 
-async function importSimBrief() {
-  const user = $('#simbriefUser').value.trim();
-  if (!user) return toast('Enter a SimBrief username or Pilot ID');
-  const button = $('#importSimBriefButton');
-  setButtonBusy(button, true, 'IMPORTING…');
-  try {
-    const data = await fetchJson(`/api/simbrief?user=${encodeURIComponent(user)}`);
-    const parsed = parseSimBrief(data.ofp);
-    state.importedOfpText = parsed.text;
-    applyPlan(parsed.plan);
-    $('#simbriefStatus').className = 'notice info';
-    $('#simbriefStatus').innerHTML = `<strong>Imported</strong><span>${esc(parsed.plan.origin)} → ${esc(parsed.plan.destination)} from the latest SimBrief OFP.</span>`;
-    await loadBriefing();
-    setView('ofp');
-    toast('Latest SimBrief OFP imported');
-  } catch (error) {
-    $('#simbriefStatus').className = 'notice danger';
-    $('#simbriefStatus').innerHTML = `<strong>Import failed</strong><span>${esc(error.message)}</span>`;
-    toast(error.message);
-  } finally {
-    setButtonBusy(button, false);
+function renderLoadRows() {
+  const profile = activeProfile();
+  if (!profile) { $('#loadRows').innerHTML = ''; return; }
+  const rows = state.wb?.rows || [];
+  $('#loadRows').innerHTML = rows.map(row => `<tr>
+    <td><strong>${esc(row.station.name)}</strong><div class="eyebrow">${esc(row.station.type.toUpperCase())}</div></td>
+    <td>${formatNumber(row.station.arm,2)} ${esc(profile.units.arm)}</td>
+    <td><input data-load-station="${esc(row.station.id)}" type="number" min="0" step="0.1" value="${esc(row.input)}"><small>${row.station.type === 'fuel' ? esc(profile.units.fuel) : esc(profile.units.weight)}</small></td>
+    <td>${formatNumber(row.weight,1)} ${esc(profile.units.weight)}</td>
+    <td>${formatNumber(row.moment,1)}</td>
+    <td>${row.station.max > 0 ? `${formatNumber(row.station.max,1)} ${row.station.type === 'fuel' ? esc(profile.units.fuel) : esc(profile.units.weight)}` : '—'}</td>
+  </tr>`).join('');
+}
+
+function renderPhaseSummary() {
+  const profile = activeProfile();
+  const phases = state.wb?.phases;
+  if (!profile || !phases) { $('#phaseSummary').innerHTML = ''; return; }
+  $('#phaseSummary').innerHTML = ['ramp','takeoff','landing'].map(key => {
+    const p = phases[key];
+    return `<div class="phase-card ${p.ok ? 'ok' : 'bad'}"><span>${esc(p.name.toUpperCase())}</span><strong>${formatNumber(p.weight,1)} ${esc(profile.units.weight)}</strong><small>CG ${formatNumber(p.cg,2)} ${esc(profile.units.arm)} · ${p.ok ? 'WITHIN' : 'CHECK'}</small></div>`;
+  }).join('');
+}
+
+function renderWbChart() {
+  const svg = $('#wbChart');
+  const profile = activeProfile();
+  const points = profile?.envelope || [];
+  const phases = state.wb?.phases;
+  if (!profile || points.length < 2 || !phases) {
+    svg.innerHTML = '<text x="320" y="180" text-anchor="middle">Enter a verified CG envelope to display the graph.</text>';
+    return;
   }
+  const weights = points.map(p => p.weight).concat([phases.ramp.weight, phases.takeoff.weight, phases.landing.weight]).filter(Number.isFinite);
+  const arms = points.flatMap(p => [p.forward,p.aft]).concat([phases.ramp.cg, phases.takeoff.cg, phases.landing.cg]).filter(Number.isFinite);
+  let minW = Math.min(...weights), maxW = Math.max(...weights), minA = Math.min(...arms), maxA = Math.max(...arms);
+  const wPad = Math.max(20,(maxW-minW)*.12), aPad = Math.max(.5,(maxA-minA)*.12);
+  minW -= wPad; maxW += wPad; minA -= aPad; maxA += aPad;
+  const x = arm => 58 + (arm-minA)/(maxA-minA) * 540;
+  const y = weight => 318 - (weight-minW)/(maxW-minW) * 270;
+  const forward = points.map(p => `${x(p.forward)},${y(p.weight)}`);
+  const aft = [...points].reverse().map(p => `${x(p.aft)},${y(p.weight)}`);
+  const grid = [];
+  for (let i=0;i<=5;i++) {
+    const gx = 58 + i*108, gy = 48 + i*54;
+    grid.push(`<line class="gridline" x1="${gx}" y1="48" x2="${gx}" y2="318"/><text x="${gx}" y="338" text-anchor="middle">${formatNumber(minA+(maxA-minA)*i/5,1)}</text>`);
+    grid.push(`<line class="gridline" x1="58" y1="${gy}" x2="598" y2="${gy}"/><text x="50" y="${gy+3}" text-anchor="end">${Math.round(maxW-(maxW-minW)*i/5)}</text>`);
+  }
+  const phasePoints = [
+    ['ramp','point-ramp'],['takeoff','point-takeoff'],['landing','point-landing']
+  ].map(([key,cls]) => { const p=phases[key]; return `<circle class="${cls}" cx="${x(p.cg)}" cy="${y(p.weight)}" r="6"><title>${p.name}: ${formatNumber(p.weight,1)} / ${formatNumber(p.cg,2)}</title></circle>`; }).join('');
+  svg.innerHTML = `${grid.join('')}<polygon class="envelope" points="${forward.concat(aft).join(' ')}"/>${phasePoints}<text x="328" y="356" text-anchor="middle">CG (${esc(profile.units.arm)})</text><text x="14" y="182" transform="rotate(-90 14 182)" text-anchor="middle">WEIGHT (${esc(profile.units.weight)})</text>`;
+}
+
+function renderWeightBalance() {
+  const profile = activeProfile();
+  $('#wbTitle').textContent = profile ? `${profile.name} load sheet` : 'Load sheet';
+  const badge = $('#wbBadge');
+  if (!profile) { badge.className='badge neutral'; badge.textContent='NO PROFILE'; }
+  else if (state.wb?.ok) { badge.className='badge success'; badge.textContent='WITHIN LIMITS'; }
+  else { badge.className='badge danger'; badge.textContent='CHECK LOAD'; }
+  renderLoadRows();
+  renderPhaseSummary();
+  renderWbChart();
+  const issues = state.wb?.issues || ['No aircraft profile selected.'];
+  $('#wbIssues').innerHTML = issues.length ? [...new Set(issues)].map(text => `<div class="data-item danger"><strong>CHECK</strong><p>${esc(text)}</p></div>`).join('') : '<div class="data-item success"><strong>All configured W&B checks pass</strong><p>Verify figures against the aircraft records and POH/AFM before flight.</p></div>';
+}
+
+function pressureAltitude(elevation, altimeter) {
+  return elevation + (29.92 - altimeter) * 1000;
+}
+
+function densityAltitude(pa, tempC) {
+  const isa = 15 - 1.9812 * (pa / 1000);
+  return pa + 120 * (tempC - isa);
+}
+
+function idwInterpolate(rows, input, outputs) {
+  const clean = rows.filter(row => ['pa','temp','weight'].every(k => Number.isFinite(Number(row[k]))) && outputs.every(k => Number.isFinite(Number(row[k]))));
+  if (!clean.length) return null;
+  const ranges = {};
+  for (const key of ['pa','temp','weight']) {
+    const vals = clean.map(r => Number(r[key]));
+    ranges[key] = Math.max(1, Math.max(...vals) - Math.min(...vals));
+  }
+  const ranked = clean.map(row => {
+    const distance = Math.sqrt(['pa','temp','weight'].reduce((sum,key) => sum + ((Number(row[key]) - input[key]) / ranges[key]) ** 2, 0));
+    return { row, distance };
+  }).sort((a,b) => a.distance - b.distance).slice(0, Math.min(8, clean.length));
+  if (ranked[0].distance < 1e-9) return Object.fromEntries(outputs.map(k => [k, Number(ranked[0].row[k])]));
+  const weights = ranked.map(r => 1 / (r.distance ** 2 + 1e-6));
+  const denom = weights.reduce((a,b)=>a+b,0);
+  return Object.fromEntries(outputs.map(key => [key, ranked.reduce((sum,r,i) => sum + Number(r.row[key]) * weights[i],0) / denom]));
+}
+
+function calculatePerformance() {
+  const profile = activeProfile();
+  const elevation = number($('#perfElevation').value, airportElev(airportFor(state.flight.origin)) || 0);
+  const altimeter = number($('#perfAltimeter').value, 29.92);
+  const temp = number($('#perfTemperature').value, 15);
+  const runwayHeading = number($('#perfRunwayHeading').value, 0);
+  const windDir = number($('#perfWindDirection').value, state.flight.windDirection);
+  const windSpeed = number($('#perfWindSpeed').value, state.flight.windSpeed);
+  const runwayLength = number($('#perfRunwayLength').value, 0);
+  const safetyFactor = number($('#perfSafetyFactor').value, 50);
+  const pa = pressureAltitude(elevation, altimeter);
+  const da = densityAltitude(pa, temp);
+  const angle = angularDifference(windDir, runwayHeading) * Math.PI / 180;
+  const headwind = runwayHeading ? windSpeed * Math.cos(angle) : 0;
+  const crosswind = runwayHeading ? Math.abs(windSpeed * Math.sin(angle)) : 0;
+  const takeoffWeight = state.wb?.phases?.takeoff?.weight || 0;
+  const landingWeight = state.wb?.phases?.landing?.weight || takeoffWeight;
+  const takeoff = profile ? idwInterpolate(profile.performance.takeoff, { pa, temp, weight: takeoffWeight }, ['groundRoll','over50']) : null;
+  const landing = profile ? idwInterpolate(profile.performance.landing, { pa, temp, weight: landingWeight }, ['groundRoll','over50']) : null;
+  const corrections = profile?.performance?.corrections || {};
+  const surface = $('#perfSurface').value;
+  const surfacePct = surface === 'grass' ? number(corrections.grassPct) : surface === 'wet' ? number(corrections.wetPct) : surface === 'soft' ? number(corrections.softPct) : 0;
+  const windPct = headwind >= 0 ? -headwind * number(corrections.headwindPctPerKt) : Math.abs(headwind) * number(corrections.tailwindPctPerKt);
+  const correctionMultiplier = Math.max(.1, 1 + (surfacePct + windPct) / 100);
+  const safetyMultiplier = 1 + safetyFactor / 100;
+  const apply = result => result ? {
+    baseGroundRoll: result.groundRoll,
+    baseOver50: result.over50,
+    adjustedGroundRoll: result.groundRoll * correctionMultiplier,
+    adjustedOver50: result.over50 * correctionMultiplier,
+    plannedGroundRoll: result.groundRoll * correctionMultiplier * safetyMultiplier,
+    plannedOver50: result.over50 * correctionMultiplier * safetyMultiplier
+  } : null;
+  state.performance = { elevation, altimeter, temp, pa, da, runwayHeading, windDir, windSpeed, headwind, crosswind, runwayLength, safetyFactor, takeoff: apply(takeoff), landing: apply(landing), profileVerified: !!profile?.verified };
+  renderPerformance();
+  return state.performance;
+}
+
+function renderPerformance() {
+  const perf = state.performance;
+  const profile = activeProfile();
+  const badge = $('#performanceBadge');
+  badge.className = `badge ${profile?.verified ? 'success' : 'warning'}`;
+  badge.textContent = profile?.verified ? 'PROFILE VERIFIED' : 'UNVERIFIED';
+  if (!perf) {
+    ['perfPressureAltitude','perfDensityAltitude','perfHeadwind','perfCrosswind'].forEach(id => $(`#${id}`).textContent='—');
+    $('#performanceResults').innerHTML = '<div class="data-item"><strong>No calculation</strong><p>Enter conditions and calculate from the active aircraft profile.</p></div>';
+    return;
+  }
+  $('#perfPressureAltitude').textContent = Math.round(perf.pa);
+  $('#perfDensityAltitude').textContent = Math.round(perf.da);
+  $('#perfHeadwind').textContent = formatNumber(perf.headwind,1);
+  $('#perfCrosswind').textContent = formatNumber(perf.crosswind,1);
+  const settings = loadSettings();
+  const items = [];
+  if (!profile?.verified) items.push({ level:'danger', title:'Profile is unverified', text:'Do not use these results operationally until the profile is checked against the current POH/AFM and aircraft records.' });
+  if (perf.da > settings.maxDensityAltitude) items.push({ level:'warning', title:'Density altitude threshold exceeded', text:`${Math.round(perf.da)} ft exceeds your configured ${settings.maxDensityAltitude} ft alert.` });
+  const xwindLimit = profile?.limits?.maxCrosswind || settings.maxCrosswind;
+  if (perf.crosswind > xwindLimit) items.push({ level:'danger', title:'Crosswind threshold exceeded', text:`${formatNumber(perf.crosswind,1)} kt exceeds ${xwindLimit} kt.` });
+  for (const [label,result] of [['Takeoff',perf.takeoff],['Landing',perf.landing]]) {
+    if (!result) items.push({ level:'danger', title:`${label} table unavailable`, text:'Enter enough POH/AFM table points around the planned pressure altitude, temperature and weight.' });
+    else {
+      const margin = perf.runwayLength > 0 ? perf.runwayLength - result.plannedOver50 : NaN;
+      items.push({ level: Number.isFinite(margin) && margin < 0 ? 'danger' : 'success', title:`${label} planned distance`, text:`Base over-50-ft ${Math.round(result.baseOver50)} ft · corrected ${Math.round(result.adjustedOver50)} ft · with safety factor ${Math.round(result.plannedOver50)} ft${Number.isFinite(margin) ? ` · runway margin ${Math.round(margin)} ft` : ''}.` });
+    }
+  }
+  $('#performanceResults').innerHTML = items.map(i => `<div class="data-item ${i.level}"><strong>${esc(i.title)}</strong><p>${esc(i.text)}</p></div>`).join('');
+}
+
+function validateFlight() {
+  const issues = [];
+  if (!state.flight.origin || !state.flight.destination) issues.push('Origin and destination are required.');
+  if (state.flight.origin === state.flight.destination) issues.push('Origin and destination must differ.');
+  if (!(state.flight.tas > 0)) issues.push('Cruise TAS is required.');
+  if (!(state.flight.fuelBurn > 0)) issues.push('Fuel burn is required.');
+  return issues;
+}
+
+function completenessItems() {
+  const profile = activeProfile();
+  const settings = loadSettings();
+  const briefAge = ageMinutes(state.briefingFetchedAt);
+  const routeIssues = validateFlight();
+  const fuelQty = state.wb?.rows?.filter(r => r.station.type === 'fuel').reduce((sum,r)=>sum+r.input,0) || 0;
+  return [
+    { name:'AIRCRAFT', ok:!!profile?.verified, detail:profile?.verified ? `${profile.name} verified` : 'Profile must be verified' },
+    { name:'ROUTE', ok:routeIssues.length===0 && Number.isFinite(state.calculations.distanceNm), detail:routeIssues[0] || (Number.isFinite(state.calculations.distanceNm) ? `${Math.round(state.calculations.distanceNm)} NM calculated` : 'Load airport data') },
+    { name:'FUEL', ok:state.calculations.requiredFuel > 0 && fuelQty >= state.calculations.requiredFuel, detail:fuelQty ? `${formatNumber(fuelQty,1)} aboard / ${formatNumber(state.calculations.requiredFuel,1)} required` : 'Enter fuel in W&B' },
+    { name:'W&B', ok:!!state.wb?.ok, detail:state.wb?.ok ? 'Ramp, takeoff and landing pass' : 'Load or profile requires attention' },
+    { name:'BRIEF', ok:Number.isFinite(briefAge) && briefAge <= settings.briefStaleMinutes, detail:Number.isFinite(briefAge) ? `${Math.round(briefAge)} min old` : 'Not loaded' },
+    { name:'NOTAMS', ok:!!state.flight.officialNotamCheck, detail:state.flight.officialNotamCheck ? `Checked ${formatDateTime(state.flight.officialNotamCheck.time)}` : 'Official check required' }
+  ];
+}
+
+function renderCompleteness() {
+  const items = completenessItems();
+  const complete = items.filter(i=>i.ok).length;
+  $('#completenessLabel').textContent = `${complete} OF ${items.length} COMPLETE`;
+  $('#planningChecklist').innerHTML = items.map(i => `<div class="check-tile ${i.ok ? 'ok' : 'bad'}"><strong>${esc(i.name)} · ${i.ok ? 'PASS' : 'OPEN'}</strong><span>${esc(i.detail)}</span></div>`).join('');
+  const gate = $('#planningGate');
+  if (complete === items.length) { gate.className='badge success'; gate.textContent='PLANNING COMPLETE'; }
+  else if (complete >= 3) { gate.className='badge warning'; gate.textContent=`${items.length-complete} ITEMS OPEN`; }
+  else { gate.className='badge neutral'; gate.textContent='DRAFT'; }
+}
+
+function renderAircraftList() {
+  $('#aircraftList').innerHTML = state.profiles.map(p => `<button class="profile-button ${p.id===state.editorProfileId?'active':''}" data-profile-id="${esc(p.id)}"><strong>${esc(p.name)}</strong><span>${esc(p.model || p.icao || 'NO MODEL')} · ${esc(p.registration || 'NO REG')} · ${p.verified ? 'VERIFIED' : 'UNVERIFIED'}</span></button>`).join('');
+}
+
+function loadEditorDraft(profile) {
+  state.editorDraft = structuredCloneSafe(profile || blankProfile());
+  renderProfileEditor();
+}
+
+function setEditorValue(id, value) {
+  const el = $(`#${id}`);
+  if (el) el.value = value ?? '';
+}
+
+function renderProfileEditor() {
+  const p = state.editorDraft || editorProfile();
+  if (!p) return;
+  $('#profileVerified').checked = !!p.verified;
+  setEditorValue('profileName',p.name);
+  setEditorValue('profileModel',p.model);
+  setEditorValue('profileRegistration',p.registration);
+  setEditorValue('profileIcao',p.icao);
+  setEditorValue('profileWeightUnit',p.units.weight);
+  setEditorValue('profileArmUnit',p.units.arm);
+  setEditorValue('profileFuelUnit',p.units.fuel);
+  setEditorValue('profileFuelDensity',p.fuelDensity);
+  setEditorValue('profileEmptyWeight',p.emptyWeight);
+  setEditorValue('profileEmptyArm',p.emptyArm);
+  setEditorValue('profileMaxRamp',p.limits.maxRamp);
+  setEditorValue('profileMaxTakeoff',p.limits.maxTakeoff);
+  setEditorValue('profileMaxLanding',p.limits.maxLanding);
+  setEditorValue('profileMaxZeroFuel',p.limits.maxZeroFuel);
+  setEditorValue('profileUsableFuel',p.limits.usableFuel);
+  setEditorValue('profileDefaultTas',p.defaults.tas);
+  setEditorValue('profileDefaultBurn',p.defaults.burn);
+  setEditorValue('profileTaxiBurn',p.defaults.taxiBurn);
+  setEditorValue('profileMaxCrosswind',p.limits.maxCrosswind);
+  setEditorValue('profileRevision',p.revision);
+  renderStationEditor();
+  renderEnvelopeEditor();
+  renderPerformanceEditor();
+  renderAircraftList();
+}
+
+function renderStationEditor() {
+  const p = state.editorDraft;
+  $('#stationEditorRows').innerHTML = (p?.stations || []).map(s => `<tr data-station-row="${esc(s.id)}"><td><input data-key="name" value="${esc(s.name)}"></td><td><select data-key="type"><option value="seat" ${s.type==='seat'?'selected':''}>Seat</option><option value="baggage" ${s.type==='baggage'?'selected':''}>Baggage</option><option value="fuel" ${s.type==='fuel'?'selected':''}>Fuel</option><option value="other" ${s.type==='other'?'selected':''}>Other</option></select></td><td><input data-key="arm" type="number" step="0.01" value="${esc(s.arm)}"></td><td><input data-key="max" type="number" step="0.1" value="${esc(s.max)}"></td><td><input data-key="defaultValue" type="number" step="0.1" value="${esc(s.defaultValue)}"></td><td><button class="row-delete" data-delete-station="${esc(s.id)}">×</button></td></tr>`).join('');
+}
+
+function renderEnvelopeEditor() {
+  const p = state.editorDraft;
+  $('#envelopeEditorRows').innerHTML = (p?.envelope || []).map((point,index) => `<tr data-envelope-row="${index}"><td><input data-key="weight" type="number" step="0.1" value="${esc(point.weight)}"></td><td><input data-key="forward" type="number" step="0.01" value="${esc(point.forward)}"></td><td><input data-key="aft" type="number" step="0.01" value="${esc(point.aft)}"></td><td><button class="row-delete" data-delete-envelope="${index}">×</button></td></tr>`).join('');
+}
+
+function collectCurrentPerformanceTable() {
+  const p = state.editorDraft;
+  if (!p) return;
+  const tab = state.perfEditorTab;
+  if (tab === 'takeoff' || tab === 'landing') {
+    p.performance[tab] = $$('[data-performance-row]').map(row => ({
+      pa: number($('[data-key="pa"]',row)?.value),
+      temp: number($('[data-key="temp"]',row)?.value),
+      weight: number($('[data-key="weight"]',row)?.value),
+      groundRoll: number($('[data-key="groundRoll"]',row)?.value),
+      over50: number($('[data-key="over50"]',row)?.value)
+    })).filter(r => Object.values(r).some(v => v !== 0));
+  } else if (tab === 'cruise') {
+    p.performance.cruise = $$('[data-performance-row]').map(row => ({
+      altitude: number($('[data-key="altitude"]',row)?.value),
+      power: number($('[data-key="power"]',row)?.value),
+      tas: number($('[data-key="tas"]',row)?.value),
+      burn: number($('[data-key="burn"]',row)?.value)
+    })).filter(r => Object.values(r).some(v => v !== 0));
+  } else if (tab === 'corrections') {
+    p.performance.corrections = {
+      grassPct: number($('#corrGrass')?.value), wetPct: number($('#corrWet')?.value), softPct: number($('#corrSoft')?.value),
+      headwindPctPerKt: number($('#corrHeadwind')?.value), tailwindPctPerKt: number($('#corrTailwind')?.value)
+    };
+  }
+}
+
+function renderPerformanceEditor() {
+  const p = state.editorDraft;
+  $$('[data-perf-editor]').forEach(button => button.classList.toggle('active', button.dataset.perfEditor === state.perfEditorTab));
+  const root = $('#performanceEditor');
+  const tab = state.perfEditorTab;
+  if (tab === 'takeoff' || tab === 'landing') {
+    const rows = p.performance[tab] || [];
+    root.innerHTML = `<div class="performance-editor-toolbar"><button class="secondary-button compact" id="addPerformanceRow">ADD DATA POINT</button></div><div class="table-wrap"><table class="data-table editable"><thead><tr><th>Pressure alt ft</th><th>Temp °C</th><th>Weight</th><th>Ground roll ft</th><th>Over 50 ft</th><th></th></tr></thead><tbody>${rows.map((r,i)=>`<tr data-performance-row="${i}"><td><input data-key="pa" type="number" value="${esc(r.pa)}"></td><td><input data-key="temp" type="number" value="${esc(r.temp)}"></td><td><input data-key="weight" type="number" value="${esc(r.weight)}"></td><td><input data-key="groundRoll" type="number" value="${esc(r.groundRoll)}"></td><td><input data-key="over50" type="number" value="${esc(r.over50)}"></td><td><button class="row-delete" data-delete-performance="${i}">×</button></td></tr>`).join('')}</tbody></table></div>`;
+  } else if (tab === 'cruise') {
+    const rows = p.performance.cruise || [];
+    root.innerHTML = `<div class="performance-editor-toolbar"><button class="secondary-button compact" id="addPerformanceRow">ADD DATA POINT</button></div><div class="table-wrap"><table class="data-table editable"><thead><tr><th>Altitude ft</th><th>Power %</th><th>TAS kt</th><th>Fuel / hr</th><th></th></tr></thead><tbody>${rows.map((r,i)=>`<tr data-performance-row="${i}"><td><input data-key="altitude" type="number" value="${esc(r.altitude)}"></td><td><input data-key="power" type="number" value="${esc(r.power)}"></td><td><input data-key="tas" type="number" value="${esc(r.tas)}"></td><td><input data-key="burn" type="number" step="0.1" value="${esc(r.burn)}"></td><td><button class="row-delete" data-delete-performance="${i}">×</button></td></tr>`).join('')}</tbody></table></div>`;
+  } else {
+    const c = p.performance.corrections || {};
+    root.innerHTML = `<div class="correction-grid"><label><span>Grass increase %</span><input id="corrGrass" type="number" step="1" value="${esc(c.grassPct || 0)}"></label><label><span>Wet increase %</span><input id="corrWet" type="number" step="1" value="${esc(c.wetPct || 0)}"></label><label><span>Soft increase %</span><input id="corrSoft" type="number" step="1" value="${esc(c.softPct || 0)}"></label><label><span>Headwind reduction % / kt</span><input id="corrHeadwind" type="number" step="0.1" value="${esc(c.headwindPctPerKt || 0)}"></label><label><span>Tailwind increase % / kt</span><input id="corrTailwind" type="number" step="0.1" value="${esc(c.tailwindPctPerKt || 0)}"></label></div>`;
+  }
+}
+
+function collectProfileEditor() {
+  const p = state.editorDraft || blankProfile();
+  collectCurrentPerformanceTable();
+  p.verified = $('#profileVerified').checked;
+  p.name = $('#profileName').value.trim() || 'Unnamed aircraft';
+  p.model = $('#profileModel').value.trim();
+  p.registration = $('#profileRegistration').value.trim().toUpperCase();
+  p.icao = $('#profileIcao').value.trim().toUpperCase();
+  p.units = { weight: $('#profileWeightUnit').value, arm: $('#profileArmUnit').value, fuel: $('#profileFuelUnit').value };
+  p.fuelDensity = number($('#profileFuelDensity').value);
+  p.emptyWeight = number($('#profileEmptyWeight').value);
+  p.emptyArm = number($('#profileEmptyArm').value);
+  p.limits = {
+    maxRamp: number($('#profileMaxRamp').value), maxTakeoff: number($('#profileMaxTakeoff').value), maxLanding: number($('#profileMaxLanding').value),
+    maxZeroFuel: number($('#profileMaxZeroFuel').value), usableFuel: number($('#profileUsableFuel').value), maxCrosswind: number($('#profileMaxCrosswind').value)
+  };
+  p.defaults = { tas: number($('#profileDefaultTas').value), burn: number($('#profileDefaultBurn').value), taxiBurn: number($('#profileTaxiBurn').value) };
+  p.revision = $('#profileRevision').value.trim();
+  p.stations = $$('[data-station-row]').map(row => ({
+    id: row.dataset.stationRow,
+    name: $('[data-key="name"]',row).value.trim() || 'Station',
+    type: $('[data-key="type"]',row).value,
+    arm: number($('[data-key="arm"]',row).value),
+    max: number($('[data-key="max"]',row).value),
+    defaultValue: number($('[data-key="defaultValue"]',row).value)
+  }));
+  p.envelope = $$('[data-envelope-row]').map(row => ({
+    weight: number($('[data-key="weight"]',row).value), forward: number($('[data-key="forward"]',row).value), aft: number($('[data-key="aft"]',row).value)
+  })).filter(r => r.weight > 0).sort((a,b)=>a.weight-b.weight);
+  p.updatedAt = new Date().toISOString();
+  state.editorDraft = p;
+  return p;
+}
+
+function saveProfile() {
+  const profile = collectProfileEditor();
+  const index = state.profiles.findIndex(p => p.id === profile.id);
+  if (index >= 0) state.profiles[index] = normalizeProfile(profile); else state.profiles.push(normalizeProfile(profile));
+  saveProfiles();
+  if (state.activeProfileId === profile.id) {
+    state.flight.activeProfileId = profile.id;
+    state.wb = calculateWeightBalance();
+  }
+  renderProfileSelect();
+  renderAircraftList();
+  renderAll();
+  toast('Aircraft profile saved');
+}
+
+function chooseEditorProfile(id) {
+  const profile = state.profiles.find(p => p.id === id);
+  if (!profile) return;
+  state.editorProfileId = id;
+  loadEditorDraft(profile);
+}
+
+function newProfile() {
+  const profile = blankProfile();
+  state.profiles.push(profile);
+  state.editorProfileId = profile.id;
+  saveProfiles();
+  loadEditorDraft(profile);
+  renderProfileSelect();
+  toast('New blank profile created');
+}
+
+function duplicateProfile() {
+  const source = collectProfileEditor();
+  const copy = structuredCloneSafe(source);
+  copy.id = uid();
+  copy.name = `${source.name} Copy`;
+  copy.registration = '';
+  copy.verified = false;
+  copy.stations = copy.stations.map(s => ({ ...s, id: uid() }));
+  state.profiles.push(copy);
+  state.editorProfileId = copy.id;
+  saveProfiles();
+  loadEditorDraft(copy);
+  renderProfileSelect();
+  toast('Profile duplicated and marked unverified');
+}
+
+function deleteProfile() {
+  if (state.profiles.length <= 1) return toast('At least one aircraft profile is required');
+  const profile = editorProfile();
+  if (!profile || !confirm(`Delete ${profile.name}?`)) return;
+  state.profiles = state.profiles.filter(p => p.id !== profile.id);
+  if (state.activeProfileId === profile.id) {
+    state.activeProfileId = state.profiles[0].id;
+    state.flight.activeProfileId = state.activeProfileId;
+    state.flight.load = Object.fromEntries(state.profiles[0].stations.map(s => [s.id,s.defaultValue || 0]));
+  }
+  state.editorProfileId = state.profiles[0].id;
+  saveProfiles();
+  renderProfileSelect();
+  loadEditorDraft(state.profiles[0]);
+  recalculate();
+  toast('Profile deleted');
+}
+
+function resetLoad() {
+  const p = activeProfile();
+  if (!p) return;
+  state.flight.load = Object.fromEntries(p.stations.map(s => [s.id,s.defaultValue || 0]));
+  recalculate();
+  toast('Load reset to profile defaults');
+}
+
+function renderChecklists() {
+  const profile = activeProfile();
+  const sections = profile?.checklists || DEFAULT_CHECKLISTS;
+  const keyBase = profile?.id || 'default';
+  $('#checklistSections').innerHTML = sections.map((section,sIndex) => `<article class="panel checklist-card"><h3>${esc(section.name)}</h3><div class="checklist-items">${(section.items || []).map((item,iIndex) => {
+    const key = `${keyBase}:${sIndex}:${iIndex}`;
+    const checked = !!state.checklistChecks[key];
+    return `<label class="checklist-row ${checked?'checked':''}"><input type="checkbox" data-checklist-key="${esc(key)}" ${checked?'checked':''}><span>${esc(item)}</span></label>`;
+  }).join('')}</div></article>`).join('');
+  $('#checklistJson').value = JSON.stringify(sections, null, 2);
+}
+
+function saveChecklistEditor() {
+  const profile = activeProfile();
+  if (!profile) return;
+  try {
+    const parsed = JSON.parse($('#checklistJson').value);
+    if (!Array.isArray(parsed) || parsed.some(s => !s.name || !Array.isArray(s.items))) throw new Error('Use an array of sections with name and items.');
+    profile.checklists = parsed.map(s => ({ name: String(s.name), items: s.items.map(String) }));
+    saveProfiles();
+    $('#checklistEditorPanel').classList.add('hidden');
+    renderChecklists();
+    toast('Aircraft checklists saved');
+  } catch (error) { toast(error.message); }
+}
+
+function resetChecklistChecks() {
+  const profile = activeProfile();
+  const prefix = `${profile?.id || 'default'}:`;
+  for (const key of Object.keys(state.checklistChecks)) if (key.startsWith(prefix)) delete state.checklistChecks[key];
+  localStorage.setItem(STORAGE.checklist, JSON.stringify(state.checklistChecks));
+  renderChecklists();
+}
+
+async function sha256(value) {
+  if (!crypto?.subtle) return 'UNAVAILABLE';
+  const data = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest('SHA-256', data);
+  return [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function makeSnapshot(kind = 'flight') {
+  const profile = activeProfile();
+  const payload = {
+    version: 2,
+    kind,
+    savedAt: new Date().toISOString(),
+    flight: structuredCloneSafe(state.flight),
+    profile: structuredCloneSafe(profile),
+    calculations: structuredCloneSafe(state.calculations),
+    weightBalance: structuredCloneSafe(state.wb),
+    performance: structuredCloneSafe(state.performance),
+    briefing: {
+      fetchedAt: state.briefingFetchedAt,
+      sources: structuredCloneSafe(state.briefingSources),
+      airports: structuredCloneSafe(state.airports),
+      weather: structuredCloneSafe(state.weather),
+      hazards: structuredCloneSafe(state.hazards),
+      tfrs: structuredCloneSafe(state.tfrs),
+      officialNotamCheck: structuredCloneSafe(state.flight.officialNotamCheck)
+    }
+  };
+  payload.hash = await sha256(JSON.stringify(payload));
+  return payload;
+}
+
+async function saveFlightSnapshot(kind = 'flight') {
+  state.flight = collectFlight();
+  state.calculations = calculatePlan(state.flight);
+  state.wb = calculateWeightBalance();
+  const snapshot = await makeSnapshot(kind);
+  const saved = loadSavedFlights();
+  saved.unshift(snapshot);
+  localStorage.setItem(STORAGE.flights, JSON.stringify(saved.slice(0,50)));
+  renderSavedFlights();
+  toast(kind === 'briefing' ? 'Briefing snapshot saved locally' : 'Flight snapshot saved locally');
+}
+
+function renderSavedFlights() {
+  const flights = loadSavedFlights();
+  $('#savedFlights').innerHTML = flights.length ? flights.map((record,index) => {
+    const f = record.flight || {};
+    return `<article class="panel saved-card"><span class="eyebrow">${esc((record.kind || 'FLIGHT').toUpperCase())} · ${esc(formatDateTime(record.savedAt))}</span><div class="route">${esc(f.origin || '—')} <span>→</span> ${esc(f.destination || '—')}</div><p>${esc(f.callsign || record.profile?.registration || 'UNNUMBERED')} · ${esc(record.profile?.name || 'AIRCRAFT')} · ${esc(f.departureDate || '')} ${esc(f.departureTime || '')}Z</p><div class="saved-meta"><div><span>DIST</span><strong>${Number.isFinite(record.calculations?.distanceNm) ? `${Math.round(record.calculations.distanceNm)} NM` : '—'}</strong></div><div><span>W&B</span><strong>${record.weightBalance?.ok ? 'PASS' : 'CHECK'}</strong></div><div><span>BRIEF</span><strong>${record.briefing?.fetchedAt ? formatDateTime(record.briefing.fetchedAt) : 'NONE'}</strong></div></div><div class="saved-actions"><button class="secondary-button" data-load-snapshot="${index}">LOAD</button><button class="delete-button" data-delete-snapshot="${index}">×</button></div></article>`;
+  }).join('') : '<div class="panel empty-state">No saved flight or briefing snapshots.</div>';
+}
+
+function loadSnapshot(index) {
+  const record = loadSavedFlights()[index];
+  if (!record) return;
+  if (record.profile) {
+    const existing = state.profiles.findIndex(p => p.id === record.profile.id);
+    if (existing >= 0) state.profiles[existing] = normalizeProfile(record.profile); else state.profiles.push(normalizeProfile(record.profile));
+    saveProfiles();
+  }
+  state.airports = record.briefing?.airports || {};
+  state.weather = record.briefing?.weather || {metars:[],tafs:[]};
+  state.hazards = record.briefing?.hazards || {sigmets:[],gairmets:[],pireps:[]};
+  state.tfrs = record.briefing?.tfrs || [];
+  state.briefingFetchedAt = record.briefing?.fetchedAt || null;
+  state.briefingSources = record.briefing?.sources || {};
+  renderProfileSelect();
+  applyFlight(record.flight);
+  setView('plan');
+  renderAll();
+  toast('Snapshot loaded');
+}
+
+function deleteSnapshot(index) {
+  const saved = loadSavedFlights();
+  saved.splice(index,1);
+  localStorage.setItem(STORAGE.flights, JSON.stringify(saved));
+  renderSavedFlights();
+}
+
+function download(filename, content, type='application/json') {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; document.body.append(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+function exportProfiles() {
+  download(`aerobrief-aircraft-${new Date().toISOString().slice(0,10)}.json`, JSON.stringify({version:2,profiles:state.profiles},null,2));
+}
+
+async function importProfiles(file) {
+  try {
+    const data = JSON.parse(await file.text());
+    const profiles = Array.isArray(data) ? data : data.profiles;
+    if (!Array.isArray(profiles) || !profiles.length) throw new Error('No profiles found.');
+    const map = new Map(state.profiles.map(p => [p.id,p]));
+    profiles.forEach(p => { const normalized=normalizeProfile(p); map.set(normalized.id,normalized); });
+    state.profiles = [...map.values()];
+    saveProfiles();
+    renderProfileSelect();
+    renderAircraftList();
+    toast(`${profiles.length} profile(s) imported`);
+  } catch (error) { toast(`Import failed: ${error.message}`); }
+}
+
+function allDataBundle() {
+  return {
+    version: 2,
+    exportedAt: new Date().toISOString(),
+    profiles: state.profiles,
+    flights: loadSavedFlights(),
+    settings: loadSettings(),
+    active: safeParse(localStorage.getItem(STORAGE.active), null),
+    checklistChecks: state.checklistChecks
+  };
+}
+
+function exportAllData() {
+  download(`aerobrief-backup-${new Date().toISOString().slice(0,10)}.json`, JSON.stringify(allDataBundle(),null,2));
+}
+
+async function importAllData(file) {
+  try {
+    const data = JSON.parse(await file.text());
+    if (data.version !== 2) throw new Error('This is not an AeroBrief v2 backup.');
+    if (Array.isArray(data.profiles) && data.profiles.length) localStorage.setItem(STORAGE.profiles,JSON.stringify(data.profiles));
+    if (Array.isArray(data.flights)) localStorage.setItem(STORAGE.flights,JSON.stringify(data.flights));
+    if (data.settings) localStorage.setItem(STORAGE.settings,JSON.stringify(data.settings));
+    if (data.active) localStorage.setItem(STORAGE.active,JSON.stringify(data.active));
+    if (data.checklistChecks) localStorage.setItem(STORAGE.checklist,JSON.stringify(data.checklistChecks));
+    location.reload();
+  } catch (error) { toast(`Import failed: ${error.message}`); }
+}
+
+function renderSettings() {
+  const s = loadSettings();
+  for (const [id,key] of [['minCeilingVfr','minCeilingVfr'],['minVisibilityVfr','minVisibilityVfr'],['minCeilingIfr','minCeilingIfr'],['minVisibilityIfr','minVisibilityIfr'],['maxCrosswind','maxCrosswind'],['maxGustSpread','maxGustSpread'],['maxDensityAltitude','maxDensityAltitude'],['briefStaleMinutes','briefStaleMinutes'],['manualDistance','manualDistance'],['defaultContingency','defaultContingency'],['reserveVfrDay','reserveVfrDay'],['reserveVfrNight','reserveVfrNight'],['reserveIfr','reserveIfr'],['displayDensity','displayDensity']]) setEditorValue(id,s[key]);
+  document.body.classList.toggle('compact',s.displayDensity==='compact');
+  $('#sourceSettingsList').innerHTML = state.sourceStatus.length ? state.sourceStatus.map(source => `<div class="data-item"><strong>${esc(source.name)} · ${esc(source.mode.toUpperCase())}</strong><p>${esc((source.products || []).join(', '))}</p><div class="meta"><a href="${esc(source.url)}" target="_blank" rel="noopener">OPEN OFFICIAL SOURCE</a></div></div>`).join('') : '<div class="data-item"><strong>Source status not loaded</strong><p>The app will retry when online.</p></div>';
+}
+
+function saveMinimaSettings() {
+  const s = loadSettings();
+  Object.assign(s, {
+    minCeilingVfr:number($('#minCeilingVfr').value), minVisibilityVfr:number($('#minVisibilityVfr').value), minCeilingIfr:number($('#minCeilingIfr').value), minVisibilityIfr:number($('#minVisibilityIfr').value),
+    maxCrosswind:number($('#maxCrosswind').value), maxGustSpread:number($('#maxGustSpread').value), maxDensityAltitude:number($('#maxDensityAltitude').value), briefStaleMinutes:number($('#briefStaleMinutes').value)
+  });
+  localStorage.setItem(STORAGE.settings,JSON.stringify(s));
+  renderAll(); toast('Personal minima saved');
+}
+
+function savePlanningSettings() {
+  const s = loadSettings();
+  Object.assign(s, {
+    manualDistance:$('#manualDistance').value, defaultContingency:number($('#defaultContingency').value), reserveVfrDay:number($('#reserveVfrDay').value), reserveVfrNight:number($('#reserveVfrNight').value), reserveIfr:number($('#reserveIfr').value), displayDensity:$('#displayDensity').value
+  });
+  localStorage.setItem(STORAGE.settings,JSON.stringify(s));
+  document.body.classList.toggle('compact',s.displayDensity==='compact');
+  recalculate(); toast('Planning settings saved');
+}
+
+function clearData() {
+  if (!confirm('Clear all aircraft profiles, flights, loads, settings and briefing data from this browser?')) return;
+  Object.values(STORAGE).forEach(key => localStorage.removeItem(key));
+  location.reload();
+}
+
+function officialNotamCheck() {
+  state.flight = collectFlight();
+  state.flight.officialNotamCheck = { time:new Date().toISOString(), reference:$('#officialBriefReference').value.trim() };
+  persistActive(); renderAll(); toast('Official NOTAM / briefing check recorded');
+}
+
+function performanceWorksheetText() {
+  const p = state.performance;
+  if (!p) return 'No performance calculation.';
+  const lines = [
+    'AEROBRIEF PERFORMANCE WORKSHEET',
+    `Aircraft: ${activeProfile()?.name || ''}`,
+    `Route: ${state.flight.origin} - ${state.flight.destination}`,
+    `Pressure altitude: ${Math.round(p.pa)} ft`,
+    `Density altitude: ${Math.round(p.da)} ft`,
+    `Headwind: ${formatNumber(p.headwind,1)} kt`,
+    `Crosswind: ${formatNumber(p.crosswind,1)} kt`,
+    `Runway length: ${p.runwayLength || 'not entered'} ft`,
+    p.takeoff ? `Takeoff planned over-50-ft: ${Math.round(p.takeoff.plannedOver50)} ft` : 'Takeoff table unavailable',
+    p.landing ? `Landing planned over-50-ft: ${Math.round(p.landing.plannedOver50)} ft` : 'Landing table unavailable',
+    `Profile verified: ${p.profileVerified ? 'YES' : 'NO'}`,
+    'VERIFY AGAINST CURRENT POH/AFM AND ACTUAL CONDITIONS.'
+  ];
+  return lines.join('\n');
+}
+
+function setView(name) {
+  // Preserve unsaved aircraft-editor work while moving between views.
+  if (state.activeView === 'aircraft' && name !== 'aircraft' && state.editorDraft) {
+    try { collectProfileEditor(); } catch (error) { console.warn('Could not preserve aircraft editor draft', error); }
+  }
+  state.activeView = name;
+  $$('[data-view-panel]').forEach(panel => panel.classList.toggle('active', panel.dataset.viewPanel === name));
+  $$('[data-view]').forEach(button => button.classList.toggle('active', button.dataset.view === name));
+  const meta = viewMeta[name] || viewMeta.plan;
+  $('#viewEyebrow').textContent = meta[0];
+  $('#viewTitle').textContent = meta[1];
+  if (window.innerWidth <= 920) $('#sidebar').classList.remove('open');
+  if (name === 'aircraft') renderProfileEditor();
+  if (name === 'checklists') renderChecklists();
+  if (name === 'flights') renderSavedFlights();
+  if (name === 'settings') renderSettings();
+  document.querySelector('.content')?.scrollTo({top:0,behavior:'smooth'});
 }
 
 function renderAll() {
-  updateStrip();
-  renderPlanSummary();
+  state.calculations = calculatePlan(state.flight);
+  state.wb = calculateWeightBalance();
+  renderTop();
+  renderPlan();
   renderWeather();
-  renderOperationalAlerts();
-  renderRunwayWind();
   renderHazards();
-  renderMapSummary();
-  renderMap();
-  generateOfp();
+  renderTfrs();
+  renderAlerts();
+  renderBriefingHeader();
+  renderSources();
+  renderWeightBalance();
+  renderPerformance();
+  renderCompleteness();
+  renderChecklists();
+  renderSavedFlights();
+  renderSettings();
 }
 
-function saveCurrentPlan() {
-  const plan = collectPlan();
-  const errors = validatePlan(plan);
-  if (errors.length) return toast(errors[0]);
-  state.plan = plan;
-  const saved = loadSavedPlans();
-  const record = { ...plan, calculations: calculatePlan(plan), savedAt: new Date().toISOString() };
-  const index = saved.findIndex(item => item.id === plan.id);
-  if (index >= 0) saved[index] = record; else saved.unshift(record);
-  localStorage.setItem(STORAGE.saved, JSON.stringify(saved.slice(0, 100)));
-  renderSavedPlans();
-  toast('Flight saved locally');
+let toastTimer;
+function toast(message) {
+  const el = $('#toast');
+  el.textContent = message;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>el.classList.remove('show'),3000);
 }
 
-function renderSavedPlans() {
-  const plans = loadSavedPlans();
-  $('#savedPlans').innerHTML = plans.length ? plans.map(plan => `<article class="panel saved-card">
-    <div class="route">${esc(plan.origin)} <span>→</span> ${esc(plan.destination)}</div>
-    <p>${esc(plan.callsign || plan.registration || 'UNNUMBERED')} · ${esc(plan.aircraft || 'AIRCRAFT')} · ${esc(plan.departureDate || 'NO DATE')} ${esc(plan.departureTime || '')}Z</p>
-    <div class="saved-meta"><div><span>DIST</span><strong>${Number.isFinite(plan.calculations?.distanceNm) ? `${Math.round(plan.calculations.distanceNm)} NM` : '—'}</strong></div><div><span>ETE</span><strong>${formatDuration(plan.calculations?.eteHours)}</strong></div><div><span>FUEL</span><strong>${formatFuel(plan.calculations?.totalFuel)} ${esc(plan.fuelUnit || '')}</strong></div></div>
-    <div class="saved-actions"><button class="secondary-button" data-load-plan="${esc(plan.id)}">LOAD FLIGHT</button><button class="delete-button" data-delete-plan="${esc(plan.id)}" aria-label="Delete flight">×</button></div>
-  </article>`).join('') : '<div class="panel empty-state">No saved flights yet.</div>';
+function setBusy(button,busy,label='WORKING…') {
+  if (!button) return;
+  if (busy) { button.dataset.text=button.textContent; button.textContent=label; button.disabled=true; }
+  else { button.textContent=button.dataset.text || button.textContent; button.disabled=false; }
 }
 
-function loadSavedPlan(id) {
-  const plan = loadSavedPlans().find(item => item.id === id);
-  if (!plan) return;
-  state.importedOfpText = '';
-  state.weather = { metars: [], tafs: [] };
-  state.hazards = { sigmets: [], gairmets: [], pireps: [] };
-  applyPlan(plan);
-  setView('plan');
-  toast('Saved flight loaded');
-}
-
-function deleteSavedPlan(id) {
-  const saved = loadSavedPlans().filter(item => item.id !== id);
-  localStorage.setItem(STORAGE.saved, JSON.stringify(saved));
-  renderSavedPlans();
-  toast('Saved flight deleted');
-}
-
-function downloadText(filename, content, type = 'text/plain') {
-  const blob = new Blob([content], { type });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = filename;
-  document.body.append(anchor);
-  anchor.click();
-  anchor.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
-function exportPlans() {
-  downloadText(`aerobrief-flights-${new Date().toISOString().slice(0,10)}.json`, JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), plans: loadSavedPlans() }, null, 2), 'application/json');
-}
-
-async function importPlansFile(file) {
-  try {
-    const data = JSON.parse(await file.text());
-    const incoming = Array.isArray(data) ? data : data.plans;
-    if (!Array.isArray(incoming)) throw new Error('The file does not contain a plans array.');
-    const current = loadSavedPlans();
-    const merged = new Map(current.map(item => [item.id, item]));
-    for (const item of incoming) if (item?.id && item?.origin && item?.destination) merged.set(item.id, item);
-    localStorage.setItem(STORAGE.saved, JSON.stringify([...merged.values()].slice(0, 100)));
-    renderSavedPlans();
-    toast(`${incoming.length} flight record(s) imported`);
-  } catch (error) {
-    toast(`Import failed: ${error.message}`);
-  }
-}
-
-function loadSettingsForm() {
-  const settings = loadSettings();
-  $('#settingAircraft').value = settings.aircraft;
-  $('#settingRegistration').value = settings.registration;
-  $('#settingTas').value = settings.tas;
-  $('#settingFuelBurn').value = settings.fuelBurn;
-  $('#settingReserve').value = settings.reserve;
-  $('#settingFuelUnit').value = settings.fuelUnit;
-}
-
-function saveSettings() {
-  const settings = {
-    aircraft: $('#settingAircraft').value.trim().toUpperCase(),
-    registration: $('#settingRegistration').value.trim().toUpperCase(),
-    tas: toNumber($('#settingTas').value, 120),
-    fuelBurn: toNumber($('#settingFuelBurn').value, 9.5),
-    reserve: toNumber($('#settingReserve').value, 45),
-    fuelUnit: $('#settingFuelUnit').value
-  };
-  localStorage.setItem(STORAGE.settings, JSON.stringify(settings));
-  toast('Preferences saved');
-}
-
-function clearAllData() {
-  const confirmation = window.confirm('Clear the active plan, saved flights, briefing data and preferences from this device?');
-  if (!confirmation) return;
-  Object.values(STORAGE).forEach(key => localStorage.removeItem(key));
-  state = { ...state, plan: null, airports: {}, weather: { metars: [], tafs: [] }, hazards: { sigmets: [], gairmets: [], pireps: [] }, importedOfpText: '', briefingFetchedAt: null };
-  applyPlan(defaultPlan());
-  loadSettingsForm();
-  renderAll();
-  renderSavedPlans();
-  toast('Local data cleared');
-}
-
-function openSimBrief() {
-  window.open('https://dispatch.simbrief.com/options/new', 'aerobrief-simbrief');
+async function fetchSourceStatus() {
+  try { const data=await fetchJson('/api/source-status'); state.sourceStatus=data.sources || []; renderSettings(); } catch { state.sourceStatus=[]; }
 }
 
 function bindEvents() {
-  $$('[data-view]').forEach(button => button.addEventListener('click', () => setView(button.dataset.view)));
-  $('#menuButton').addEventListener('click', () => $('#sidebar').classList.toggle('open'));
-  document.addEventListener('click', event => {
-    if (window.innerWidth <= 920 && $('#sidebar').classList.contains('open') && !event.target.closest('#sidebar') && !event.target.closest('#menuButton')) $('#sidebar').classList.remove('open');
-  });
-  $$('#view-plan input, #view-plan select, #view-plan textarea').forEach(input => input.addEventListener('input', () => {
-    if (input.classList.contains('icao-input')) input.value = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
-    state.importedOfpText = '';
+  $$('[data-view]').forEach(button => button.addEventListener('click',()=>setView(button.dataset.view)));
+  $('#menuButton').addEventListener('click',()=>$('#sidebar').classList.toggle('open'));
+  document.addEventListener('click',event=>{ if (window.innerWidth<=920 && $('#sidebar').classList.contains('open') && !event.target.closest('#sidebar') && !event.target.closest('#menuButton')) $('#sidebar').classList.remove('open'); });
+
+  $$('[data-view-panel="plan"] input, [data-view-panel="plan"] select, [data-view-panel="plan"] textarea').forEach(input => input.addEventListener('input',()=>{
+    if (input.classList.contains('icao-input')) input.value=input.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,5);
     recalculate();
   }));
-  $('#buildButton').addEventListener('click', buildFlight);
-  $('#refreshBriefButton').addEventListener('click', async () => {
-    const button = $('#refreshBriefButton'); setButtonBusy(button, true, 'REFRESHING…');
-    try { await loadBriefing(); toast('Briefing refreshed'); } catch (error) { toast(error.message); } finally { setButtonBusy(button, false); }
+  $('#activeAircraft').addEventListener('change',()=>{
+    const oldProfile=activeProfile();
+    state.flight=collectFlight();
+    state.activeProfileId=$('#activeAircraft').value;
+    state.flight.activeProfileId=state.activeProfileId;
+    const p=activeProfile();
+    if (p && p.id !== oldProfile?.id) {
+      state.flight.load=Object.fromEntries(p.stations.map(s=>[s.id,s.defaultValue||0]));
+      if (p.defaults.tas) state.flight.tas=p.defaults.tas;
+      if (p.defaults.burn) state.flight.fuelBurn=p.defaults.burn;
+      if (p.registration) state.flight.callsign=p.registration;
+      applyFlight(state.flight);
+    }
+    renderAll();
   });
-  $('#savePlanButton').addEventListener('click', saveCurrentPlan);
-  $('#openSimBriefButton').addEventListener('click', openSimBrief);
-  $('#openSimBriefFromOfp').addEventListener('click', openSimBrief);
-  $('#printBriefButton').addEventListener('click', () => window.print());
-  $('#copyOfpButton').addEventListener('click', async () => {
-    try { await navigator.clipboard.writeText($('#ofpText').textContent); toast('OFP copied'); } catch { toast('Clipboard access was blocked'); }
+  $('#flightRules').addEventListener('change',()=>{
+    const s=loadSettings();
+    $('#reserveMinutes').value=$('#flightRules').value==='IFR'?s.reserveIfr:s.reserveVfrDay;
+    recalculate();
   });
-  $('#downloadOfpButton').addEventListener('click', () => {
-    const plan = state.plan || collectPlan();
-    downloadText(`AeroBrief-${plan.origin || 'ORIG'}-${plan.destination || 'DEST'}.txt`, $('#ofpText').textContent);
+
+  $('#buildBriefButton').addEventListener('click',async()=>{ const b=$('#buildBriefButton'); setBusy(b,true,'LOADING FAA DATA…'); try { await loadBriefing(); setView('brief'); toast('FAA-source briefing loaded'); } catch(e){toast(e.message);} finally{setBusy(b,false);} });
+  $('#refreshBriefButton').addEventListener('click',async()=>{ const b=$('#refreshBriefButton'); setBusy(b,true,'REFRESHING…'); try{await loadBriefing();toast('Briefing refreshed');}catch(e){toast(e.message);}finally{setBusy(b,false);} });
+  $('#saveFlightButton').addEventListener('click',()=>saveFlightSnapshot('flight'));
+  $('#saveBriefSnapshotButton').addEventListener('click',()=>saveFlightSnapshot('briefing'));
+  $('#printPackageButton').addEventListener('click',()=>window.print());
+  $('#openNotamButton').addEventListener('click',()=>window.open('https://notams.aim.faa.gov/notamSearch/','aerobrief-notam'));
+  $('#openWxBriefButton').addEventListener('click',()=>window.open('https://www.1800wxbrief.com/','aerobrief-wxbrief'));
+  $('#confirmNotamButton').addEventListener('click',officialNotamCheck);
+  $$('[data-hazard-filter]').forEach(button=>button.addEventListener('click',()=>{state.hazardFilter=button.dataset.hazardFilter;$$('[data-hazard-filter]').forEach(b=>b.classList.toggle('active',b===button));renderHazards();}));
+
+  $('#loadRows').addEventListener('input',event=>{ const input=event.target.closest('[data-load-station]'); if(!input)return; state.flight.load={...(state.flight.load||{}),[input.dataset.loadStation]:number(input.value)}; recalculate(); });
+  $('#resetLoadButton').addEventListener('click',resetLoad);
+  $('#saveLoadButton').addEventListener('click',()=>{persistActive();toast('Load saved with active flight');});
+
+  $('#calculatePerformanceButton').addEventListener('click',calculatePerformance);
+  $('#copyPerformanceButton').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(performanceWorksheetText());toast('Performance worksheet copied');}catch{toast('Clipboard access blocked');}});
+
+  $('#aircraftList').addEventListener('click',event=>{const button=event.target.closest('[data-profile-id]');if(button)chooseEditorProfile(button.dataset.profileId);});
+  $('#newAircraftButton').addEventListener('click',newProfile);
+  $('#duplicateAircraftButton').addEventListener('click',duplicateProfile);
+  $('#saveAircraftButton').addEventListener('click',saveProfile);
+  $('#deleteAircraftButton').addEventListener('click',deleteProfile);
+  $('#addStationButton').addEventListener('click',()=>{collectProfileEditor();state.editorDraft.stations.push({id:uid(),name:'New station',type:'other',arm:0,max:0,defaultValue:0});renderStationEditor();});
+  $('#stationEditorRows').addEventListener('click',event=>{const button=event.target.closest('[data-delete-station]');if(!button)return;collectProfileEditor();state.editorDraft.stations=state.editorDraft.stations.filter(s=>s.id!==button.dataset.deleteStation);renderStationEditor();});
+  $('#addEnvelopeButton').addEventListener('click',()=>{collectProfileEditor();state.editorDraft.envelope.push({weight:0,forward:0,aft:0});renderEnvelopeEditor();});
+  $('#envelopeEditorRows').addEventListener('click',event=>{const button=event.target.closest('[data-delete-envelope]');if(!button)return;collectProfileEditor();state.editorDraft.envelope.splice(Number(button.dataset.deleteEnvelope),1);renderEnvelopeEditor();});
+  $$('[data-perf-editor]').forEach(button=>button.addEventListener('click',()=>{collectProfileEditor();state.perfEditorTab=button.dataset.perfEditor;renderPerformanceEditor();}));
+  $('#performanceEditor').addEventListener('click',event=>{
+    if(event.target.closest('#addPerformanceRow')){collectCurrentPerformanceTable();const tab=state.perfEditorTab;if(tab==='takeoff'||tab==='landing')state.editorDraft.performance[tab].push({pa:0,temp:0,weight:0,groundRoll:0,over50:0});else if(tab==='cruise')state.editorDraft.performance.cruise.push({altitude:0,power:0,tas:0,burn:0});renderPerformanceEditor();return;}
+    const del=event.target.closest('[data-delete-performance]');if(del){collectCurrentPerformanceTable();state.editorDraft.performance[state.perfEditorTab].splice(Number(del.dataset.deletePerformance),1);renderPerformanceEditor();}
   });
-  $('#importSimBriefButton').addEventListener('click', importSimBrief);
-  $$('[data-hazard-filter]').forEach(button => button.addEventListener('click', () => {
-    state.hazardFilter = button.dataset.hazardFilter;
-    $$('[data-hazard-filter]').forEach(el => el.classList.toggle('active', el === button));
-    renderHazards();
-  }));
-  $('#savedPlans').addEventListener('click', event => {
-    const load = event.target.closest('[data-load-plan]');
-    const del = event.target.closest('[data-delete-plan]');
-    if (load) loadSavedPlan(load.dataset.loadPlan);
-    if (del) deleteSavedPlan(del.dataset.deletePlan);
-  });
-  $('#exportPlansButton').addEventListener('click', exportPlans);
-  $('#importPlansButton').addEventListener('click', () => $('#planFileInput').click());
-  $('#planFileInput').addEventListener('change', event => { const file = event.target.files?.[0]; if (file) importPlansFile(file); event.target.value = ''; });
-  $('#saveSettingsButton').addEventListener('click', saveSettings);
-  $('#clearDataButton').addEventListener('click', clearAllData);
-  window.addEventListener('online', updateOnlineStatus);
-  window.addEventListener('offline', updateOnlineStatus);
+  $('#exportAircraftButton').addEventListener('click',exportProfiles);
+  $('#importAircraftButton').addEventListener('click',()=>$('#aircraftFileInput').click());
+  $('#aircraftFileInput').addEventListener('change',event=>{const file=event.target.files?.[0];if(file)importProfiles(file);event.target.value='';});
+
+  $('#checklistSections').addEventListener('change',event=>{const input=event.target.closest('[data-checklist-key]');if(!input)return;state.checklistChecks[input.dataset.checklistKey]=input.checked;localStorage.setItem(STORAGE.checklist,JSON.stringify(state.checklistChecks));renderChecklists();});
+  $('#resetChecklistButton').addEventListener('click',resetChecklistChecks);
+  $('#editChecklistButton').addEventListener('click',()=>$('#checklistEditorPanel').classList.toggle('hidden'));
+  $('#saveChecklistEditorButton').addEventListener('click',saveChecklistEditor);
+
+  $('#savedFlights').addEventListener('click',event=>{const load=event.target.closest('[data-load-snapshot]');const del=event.target.closest('[data-delete-snapshot]');if(load)loadSnapshot(Number(load.dataset.loadSnapshot));if(del)deleteSnapshot(Number(del.dataset.deleteSnapshot));});
+  $('#exportAllButton').addEventListener('click',exportAllData);
+  $('#importAllButton').addEventListener('click',()=>$('#backupFileInput').click());
+  $('#backupFileInput').addEventListener('change',event=>{const file=event.target.files?.[0];if(file)importAllData(file);event.target.value='';});
+  $('#exportDataButton').addEventListener('click',exportAllData);
+  $('#clearDataButton').addEventListener('click',clearData);
+  $('#saveSettingsButton').addEventListener('click',saveMinimaSettings);
+  $('#savePlanningSettingsButton').addEventListener('click',savePlanningSettings);
+
+  $('#safetyAcknowledge').addEventListener('change',event=>$('#acceptSafetyButton').disabled=!event.target.checked);
+  $('#acceptSafetyButton').addEventListener('click',()=>{localStorage.setItem(STORAGE.acknowledged,'yes');$('#safetyModal').classList.add('hidden');});
+  window.addEventListener('online',updateOnlineStatus);
+  window.addEventListener('offline',updateOnlineStatus);
 }
 
 function updateOnlineStatus() {
-  const online = navigator.onLine;
-  $('#onlineDot').classList.toggle('offline', !online);
-  $('#onlineLabel').textContent = online ? 'ONLINE' : 'OFFLINE';
+  const online=navigator.onLine;
+  $('#onlineDot').classList.toggle('offline',!online);
+  $('#onlineLabel').textContent=online?'ONLINE':'OFFLINE';
 }
 
 function startClock() {
-  const tick = () => { $('#zuluClock').textContent = new Date().toISOString().slice(11, 19); };
-  tick(); setInterval(tick, 1000);
+  const tick=()=>$('#zuluClock').textContent=new Date().toISOString().slice(11,19);
+  tick();setInterval(tick,1000);
 }
 
 function restoreState() {
-  const saved = safeJsonParse(localStorage.getItem(STORAGE.active), null);
-  if (saved?.airports && typeof saved.airports === 'object') state.airports = saved.airports;
-  if (saved?.weather) state.weather = saved.weather;
-  if (saved?.hazards) state.hazards = saved.hazards;
-  if (saved?.briefingFetchedAt) state.briefingFetchedAt = saved.briefingFetchedAt;
-  applyPlan(saved?.plan || defaultPlan());
+  state.profiles=loadProfiles();
+  const saved=safeParse(localStorage.getItem(STORAGE.active),null);
+  state.activeProfileId=saved?.activeProfileId || saved?.flight?.activeProfileId || state.profiles[0].id;
+  state.airports=saved?.airports || {};
+  state.weather=saved?.weather || {metars:[],tafs:[]};
+  state.hazards=saved?.hazards || {sigmets:[],gairmets:[],pireps:[]};
+  state.tfrs=saved?.tfrs || [];
+  state.briefingFetchedAt=saved?.briefingFetchedAt || null;
+  state.briefingSources=saved?.briefingSources || {};
+  state.checklistChecks=safeParse(localStorage.getItem(STORAGE.checklist),{});
+  state.editorProfileId=state.activeProfileId;
+  renderProfileSelect();
+  applyFlight(saved?.flight || defaultFlight());
+  loadEditorDraft(editorProfile());
 }
 
 async function registerServiceWorker() {
-  if ('serviceWorker' in navigator) {
-    try { await navigator.serviceWorker.register('/sw.js'); } catch (error) { console.warn('Service worker registration failed', error); }
-  }
+  if('serviceWorker' in navigator){try{await navigator.serviceWorker.register('/sw.js');}catch(e){console.warn('Service worker registration failed',e);}}
 }
 
 function init() {
   bindEvents();
   restoreState();
-  loadSettingsForm();
-  renderSavedPlans();
   renderAll();
   updateOnlineStatus();
   startClock();
+  fetchSourceStatus();
   registerServiceWorker();
+  if(localStorage.getItem(STORAGE.acknowledged)!=='yes') $('#safetyModal').classList.remove('hidden');
+  else $('#safetyModal').classList.add('hidden');
 }
 
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded',init);

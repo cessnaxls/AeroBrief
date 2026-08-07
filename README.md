@@ -1,81 +1,94 @@
-# AeroBrief 1.0
+# AeroBrief Flight Operations 2.0
 
-AeroBrief is a custom, standalone, iPad-first flight-planning and briefing web app for **flight simulation**. It deploys from GitHub to a free Render web service and installs on iPad as a full-screen Progressive Web App.
+AeroBrief is an iPad-first progressive web app for **supplemental real-world preflight planning**. It combines route and fuel calculations, configurable aircraft weight-and-balance profiles, POH/AFM-derived performance worksheets, checklists, personal minima, and live federal aviation-weather/TFR data.
 
-> **Simulation only.** Do not use AeroBrief for real-world navigation, weather decisions, aircraft performance, dispatch, or operational control.
+It intentionally does **not** include charts. Keep a current chart source suitable for the operation.
 
-## Included
+## Regulatory position
 
-- Dark iPad cockpit interface with portrait and landscape layouts.
-- Flight identity, route, schedule, altitude, TAS, wind, fuel and reserve planning.
-- Great-circle distance, initial true course, wind-adjusted groundspeed, ETE, block time and fuel estimates.
-- Live worldwide airport/runway information through AviationWeather.gov.
-- Live METAR and TAF briefing for departure, destination and alternate.
-- Route-box domestic SIGMET, G-AIRMET and PIREP retrieval.
-- Automated operational scan for low flight category, strong gusts, significant weather codes, TAF hazards and reported route hazards.
-- Estimated best-runway headwind/crosswind display.
-- OpenStreetMap route overview.
-- Plaintext simulator OFP with copy, download and print briefing support.
-- Latest SimBrief OFP import by username or numeric Pilot ID.
-- Local saved-flight library, JSON backup and restore.
-- Add-to-Home-Screen PWA support and offline app shell.
-- No database, no persistent Render disk and no paid service required.
+AeroBrief is not itself FAA-certified or individually “FAA approved.” Software placed on an iPad does not become approved merely because it uses FAA data. For Part 91 operations, pilots may use EFBs consistent with FAA AC 91-78A while remaining responsible for the completeness, currency, suitability, and backup of the information used. Part 91K/121/125/135 use must be covered by the operator’s EFB program and applicable FAA authorization under AC 120-76E.
 
-## Deploy with GitHub and Render
+Treat AeroBrief as a planning and organization tool, not as certified navigation equipment, a terrain-warning system, an FMS, or an automatic substitute for a complete preflight briefing.
 
-1. Create an empty GitHub repository.
-2. Upload **the contents of this folder** to the repository root. `package.json`, `server.mjs`, `render.yaml` and `public` must be at the top level.
-3. Commit and push the files.
-4. In Render, choose **New → Blueprint**.
-5. Connect the GitHub repository and apply the included `render.yaml`.
-6. After deployment, open `/api/health`. It should report:
+## Authoritative data design
 
-```json
-{"ok":true,"service":"aerobrief-ipad","version":"1.0.0"}
-```
+| Product | In-app behavior | Source |
+|---|---|---|
+| METAR / TAF | Retrieved through the Render server proxy | FAA Aviation Weather Center Data API / NOAA-NWS data |
+| SIGMET / G-AIRMET / PIREP | Retrieved through the server and filtered near the planned route | FAA Aviation Weather Center Data API |
+| TFR | Retrieved from the FAA Graphic TFR export, with official detail links | FAA TFR service |
+| NOTAM | Opens FAA NOTAM Search; pilot records the completed check | FAA NOTAM Search |
+| Recorded briefing / filing | Opens 1800WXBRIEF; pilot may record the briefing reference | FAA Flight Service (Leidos) |
+| Airport/runway reference | Airport lookup through AWC; official NASR/AIS links supplied | FAA Aeronautical Information Services |
+| Charts | Not included | Use a separate current chart source |
 
-Every new push to the connected branch will redeploy the app.
+Public anonymous access to the complete FAA NOTAM machine interface is not assumed. The app never substitutes an unofficial scraper or third-party NOTAM feed when an official interface is unavailable.
 
-## Install on iPad
+## Major functions
 
-1. Open the Render HTTPS URL in Safari.
-2. Tap **Share**.
-3. Choose **Add to Home Screen**.
-4. Open AeroBrief from the new home-screen icon.
+- Route, wind, groundspeed, ETE, schedule, taxi and fuel planning
+- VFR/IFR reserve and contingency settings
+- Unlimited user-created aircraft profiles
+- Aircraft-specific registration, serial number, units and revision/source notes
+- Editable empty weight, empty arm and ramp/takeoff/landing/zero-fuel limits
+- Unlimited loading stations and fuel tanks with arms, maxima and defaults
+- Editable multi-point CG envelope
+- Ramp, takeoff and landing weight/moment/CG calculations
+- Graphical CG-envelope display
+- Profile-level verification lock and conspicuous unverified warnings
+- User-entered POH/AFM takeoff, landing and cruise tables
+- Pressure altitude, density altitude and wind-component worksheets
+- Configurable runway, surface, wind and safety-factor corrections
+- Aircraft-specific JSON checklists
+- Configurable personal weather, wind, gust and density-altitude minima
+- FAA-source weather/hazard/TFR briefing
+- Explicit official NOTAM/Flight Service completion gate
+- Local saved flights and tamper-evident briefing snapshots using SHA-256 hashes
+- Full JSON backup/restore for moving data between devices
+- Standalone iPad Home Screen installation and offline application shell
 
-## Local test
+## Safety-first aircraft setup
 
-Node.js 20 or newer is required.
+The included aircraft profile is deliberately blank and **unverified**. Before operational use:
+
+1. Create a profile for the exact aircraft or approved fleet configuration.
+2. Enter basic empty weight and moment/arm from current aircraft records—not a generic POH example.
+3. Enter limitations, stations, fuel arms/density and CG envelope from the current POH/AFM and supplements.
+4. Enter performance data and correction rules from the applicable POH/AFM tables.
+5. Record the source and revision date.
+6. Independently compare several W&B and performance test cases against hand calculations or another validated method.
+7. Mark the profile verified only after that review.
+
+Any maintenance, equipment, weighing or document change that affects the profile should cause it to be reviewed and re-verified.
+
+## Deploy to GitHub and Render
+
+1. Create a new GitHub repository.
+2. Upload all files from this project folder to the repository root.
+3. In Render, choose **New → Blueprint** and select the repository.
+4. Apply `render.yaml`.
+5. Open the generated HTTPS URL in iPad Safari.
+6. Use **Share → Add to Home Screen**.
+7. Create and validate aircraft profiles, then export a backup.
+
+Render must be online to retrieve live data. The interface and previously stored local information remain available offline, but the app clearly marks the device offline and cannot make a current briefing while disconnected.
+
+## Local development
 
 ```bash
-npm install
-npm run check
+npm ci
+npm run validate
 npm start
 ```
 
 Open `http://localhost:3000`.
 
-## Live-data design
+## Data storage and privacy
 
-AviationWeather.gov currently does not allow cross-origin browser requests, so the Node service proxies narrowly scoped airport, METAR, TAF, advisory and PIREP requests. Responses are cached briefly in process to respect upstream request limits. The free Render filesystem is ephemeral; plans are intentionally stored in the browser and can be exported as JSON.
+Aircraft profiles, loads, flights, checklists, settings and briefing snapshots are stored in browser local storage on that device. No account or database is included. Live federal-data requests pass through the app’s server only to solve browser cross-origin restrictions; the included server does not persist those requests.
 
-## SimBrief
+Export backups regularly. Clearing Safari website data, deleting the Home Screen app, or changing devices may erase local data.
 
-The app can retrieve a user's latest SimBrief OFP using the public JSON fetcher and import the core flight fields. The **Open SimBrief** button uses a separate named browser window because a hosted PWA cannot force third-party authenticated pages to run inside an iframe.
+## Operational release checklist
 
-## Project structure
-
-```text
-.
-├── package.json
-├── render.yaml
-├── server.mjs
-├── .github/workflows/check.yml
-└── public
-    ├── index.html
-    ├── styles.css
-    ├── app.js
-    ├── manifest.webmanifest
-    ├── sw.js
-    └── icons
-```
+Read `SAFETY.md` and `VALIDATION.md` before using the app for an actual flight. A green in-app planning gate is a completeness aid only; it is not a dispatch release, airworthiness determination, legal approval, or guarantee that a flight is safe.

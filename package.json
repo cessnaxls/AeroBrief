@@ -1,13 +1,15 @@
 {
-  "name": "aerobrief-ipad",
-  "version": "1.0.0",
+  "name": "aerobrief-realworld",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
-  "description": "iPad-first flight planning and briefing PWA for flight simulation",
-  "engines": { "node": ">=20" },
+  "description": "iPad-first real-world supplemental flight planning and briefing PWA using authoritative FAA/NWS sources.",
   "scripts": {
     "start": "node server.mjs",
-    "dev": "node --watch server.mjs",
-    "check": "node --check server.mjs && node --check public/app.js"
+    "check": "node --check server.mjs && node --check public/app.js",
+    "validate": "node scripts/validate.mjs"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }
