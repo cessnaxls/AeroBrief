@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.2.2
+
+- Replaced fragile nested full-viewport workspace scrolling with document-level native scrolling on iPhone/iPad.
+- Kept the desktop sidebar sticky and the mobile drawer independently scrollable.
+- Removed conflicting viewport-height/overflow rules as the effective scroll architecture.
+- Updated view switching to return the document to the top.
+- Added touch/rotation/menu/focus scroll regression tests.
+
+## 2.2.1
+
+- Fixed a shell-level scrolling regression that prevented vertical workspace scrolling on iPad landscape and could interfere with touch scrolling in the mobile navigation drawer.
+- The app now uses an explicit `100dvh` viewport shell with `.content` as the native momentum-scrolling region on iPhone and iPad in both orientations.
+- Removed the mobile `touch-action: none` scroll suppression and added dedicated momentum scrolling to the sidebar drawer.
+- Preserved printable layouts by restoring document scrolling inside `@media print`.
+
 ## 2.2.0
 
 - Completed a tab-by-tab premium visual redesign for iPhone and iPad.

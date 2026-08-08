@@ -1848,7 +1848,8 @@ function setView(name) {
   if (name === 'checklists') renderChecklists();
   if (name === 'flights') renderSavedFlights();
   if (name === 'settings') renderSettings();
-  document.querySelector('.content')?.scrollTo({top:0,behavior:'smooth'});
+  window.scrollTo({top: 0, behavior: 'smooth'});
+  document.querySelector('.content')?.scrollTo?.({top: 0, behavior: 'auto'});
 }
 
 function renderAll() {

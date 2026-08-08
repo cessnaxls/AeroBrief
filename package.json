@@ -1,6 +1,6 @@
 {
   "name": "aerobrief-realworld",
-  "version": "2.2.0",
+  "version": "2.2.2",
   "private": true,
   "type": "module",
   "description": "iPad and iPhone real-world supplemental flight planning, aircraft profiles, W&B, TOLD performance and FAA/NWS briefing PWA.",

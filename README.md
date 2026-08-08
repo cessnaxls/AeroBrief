@@ -1,4 +1,4 @@
-# AeroBrief Flight Operations 2.2
+# AeroBrief Flight Operations 2.2.2
 
 AeroBrief is an iPad- and iPhone-optimized progressive web app for **supplemental real-world preflight planning**. It combines route and fuel calculations, highly configurable aircraft weight-and-balance profiles, aircraft-specific TOLD performance reports, checklists, personal minima, and live federal aviation-weather/TFR data.
 

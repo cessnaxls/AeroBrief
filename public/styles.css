@@ -1234,3 +1234,142 @@ body.sidebar-stowed .sidebar-stow-button svg { transform: rotate(180deg); }
   .topbar-left h1 { font-size: 14px; }
   .topbar-left .eyebrow { font-size: 7.5px; }
 }
+
+/* v2.2.2 — resilient iOS/iPadOS scrolling architecture.
+   The document is the primary scroll container. This intentionally avoids
+   nested full-viewport scrolling, which can become non-scrollable in Safari
+   after focus/rotation/menu interactions. Desktop side navigation is sticky;
+   mobile navigation remains an independently scrollable fixed drawer. */
+html {
+  width: 100%;
+  min-height: 100%;
+  height: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+body {
+  width: 100%;
+  min-height: 100dvh;
+  height: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-x: none;
+  overscroll-behavior-y: auto;
+  touch-action: pan-y pinch-zoom;
+}
+.app-shell {
+  width: 100%;
+  height: auto;
+  min-height: 100dvh;
+  overflow: visible;
+  align-items: stretch;
+}
+.main-shell {
+  height: auto;
+  min-height: 100dvh;
+  overflow: visible;
+}
+.content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: visible;
+  touch-action: auto;
+}
+.sidebar {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100dvh;
+  min-height: 100dvh;
+  max-height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y pinch-zoom;
+}
+
+/* Do not let form controls or interactive cards capture the vertical pan.
+   Horizontal scrollers explicitly opt into pan-x below. */
+input, select, textarea, button, a, .checklist-row, .profile-button {
+  touch-action: manipulation;
+}
+.table-wrap, .segmented, .subtabs, .profile-list {
+  touch-action: pan-x pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 920px) {
+  html, body {
+    height: auto;
+    min-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  body.sidebar-open {
+    /* The page is intentionally locked only while the drawer is open; the
+       drawer itself remains vertically scrollable. */
+    overflow: hidden;
+    touch-action: none;
+  }
+  .app-shell,
+  body.sidebar-stowed .app-shell,
+  .main-shell {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+  .content {
+    overflow: visible;
+    min-height: 0;
+    touch-action: auto;
+  }
+  .sidebar,
+  .sidebar.open {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    height: 100dvh;
+    min-height: 0;
+    max-height: 100dvh;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    touch-action: pan-y pinch-zoom;
+  }
+  body.sidebar-open .sidebar-scrim {
+    touch-action: manipulation;
+  }
+}
+
+@supports (height: 100svh) {
+  .sidebar { height: 100svh; min-height: 100svh; max-height: 100svh; }
+  @media (max-width: 920px) {
+    .sidebar, .sidebar.open { height: 100svh; max-height: 100svh; }
+  }
+}
+
+@media print {
+  html, body, .app-shell, .main-shell {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+  .sidebar { position: static !important; height: auto !important; max-height: none !important; }
+  .content { overflow: visible !important; }
+}
+
+/* v2.2.2 hardening: the mobile drawer must never be able to lock document
+   scrolling. The scrim prevents accidental background taps; page scrolling
+   remains mechanically available even if iOS interrupts a drawer transition
+   or a stale sidebar-open class survives a focus/orientation change. */
+@media (max-width: 920px) {
+  body.sidebar-open {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    touch-action: pan-y pinch-zoom !important;
+  }
+}

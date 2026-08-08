@@ -91,3 +91,24 @@ The page must not develop horizontal body overflow. A table or segmented control
 - Drawer scrim closes the menu and prevents background interaction.
 - Short iPhone landscape mode hides nonessential flight-strip content and keeps the top bar compact.
 - Top-bar title and UTC clock remain visible in every state.
+
+## Scroll regression checks (2.2.1)
+
+For every tab, confirm the workspace can be vertically scrolled from the first control through the final control on iPhone portrait, iPhone landscape, iPad portrait, and iPad landscape. Repeat with the sidebar open and, on iPad landscape, with the sidebar both expanded and stowed. Confirm the sidebar itself scrolls when its contents exceed the screen height.
+
+
+## Scroll regression checks (2.2.2)
+
+The document itself is the primary vertical scroll container to avoid iOS Safari nested-scroll lockups after input focus, screen rotation, or drawer interaction. QA must verify:
+
+- Every workspace can scroll from top to bottom with the drawer closed.
+- The mobile drawer scrolls independently when open.
+- Closing the drawer restores page scrolling immediately.
+- Focusing and dismissing text, number, select, and textarea controls does not disable page scrolling.
+- Switching tabs returns the document to the top and the new tab remains scrollable.
+- Rotating portrait ↔ landscape does not disable scrolling.
+- Horizontal table/profile scrollers do not block vertical page gestures.
+
+### Automated browser regression result — v2.2.2
+
+A Chromium touch-emulation harness was run at 390×844, 844×390, 768×1024 and 1024×768. It exercised all eight workspaces, actual mobile menu open/close state, independent drawer scrolling when the drawer exceeded viewport height, and restoration of document scrolling after closing the drawer. Result: **39/39 checks passed, 0 scroll/menu failures**.
