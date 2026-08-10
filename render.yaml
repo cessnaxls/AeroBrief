@@ -1,12 +1,15 @@
 services:
   - type: web
-    name: aerobrief-realworld
+    name: aeroslate-efb
     runtime: node
     plan: free
-    buildCommand: npm ci
+    buildCommand: npm install && npm run build
     startCommand: npm start
     healthCheckPath: /api/health
-    autoDeploy: true
     envVars:
       - key: NODE_VERSION
-        value: 22
+        value: 20
+      - key: ELECTRON_SKIP_BINARY_DOWNLOAD
+        value: "1"
+      - key: SIM_LINK_TOKEN
+        generateValue: true
