@@ -1,0 +1,108 @@
+{
+  "aircraft": {
+    "name": "C172N Demo \u2014 REPLACE DATA",
+    "reg": "N000AP",
+    "type": "C172N",
+    "maxRamp": 2307,
+    "mtow": 2300,
+    "mlw": 2300,
+    "cgMin": 35,
+    "cgMax": 47.3,
+    "fuelArm": 48,
+    "fuelDensity": 6,
+    "emptyWeight": 1450,
+    "emptyArm": 39.5,
+    "stations": [
+      {
+        "name": "Front seats",
+        "arm": 37,
+        "min": 0,
+        "max": 400
+      },
+      {
+        "name": "Rear seats",
+        "arm": 73,
+        "min": 0,
+        "max": 400
+      },
+      {
+        "name": "Baggage area 1",
+        "arm": 95,
+        "min": 0,
+        "max": 120
+      },
+      {
+        "name": "Baggage area 2",
+        "arm": 123,
+        "min": 0,
+        "max": 50
+      }
+    ]
+  },
+  "performance": [
+    {
+      "phase": "TO",
+      "weight": 2300,
+      "pa": 0,
+      "oat": 15,
+      "roll": 865,
+      "over50": 1525
+    },
+    {
+      "phase": "TO",
+      "weight": 2300,
+      "pa": 2000,
+      "oat": 15,
+      "roll": 1015,
+      "over50": 1755
+    },
+    {
+      "phase": "TO",
+      "weight": 2300,
+      "pa": 4000,
+      "oat": 15,
+      "roll": 1195,
+      "over50": 2035
+    },
+    {
+      "phase": "TO",
+      "weight": 2300,
+      "pa": 0,
+      "oat": 35,
+      "roll": 1000,
+      "over50": 1740
+    },
+    {
+      "phase": "TO",
+      "weight": 2300,
+      "pa": 4000,
+      "oat": 35,
+      "roll": 1390,
+      "over50": 2340
+    },
+    {
+      "phase": "LDG",
+      "weight": 2300,
+      "pa": 0,
+      "oat": 15,
+      "roll": 575,
+      "over50": 1335
+    },
+    {
+      "phase": "LDG",
+      "weight": 2300,
+      "pa": 2000,
+      "oat": 15,
+      "roll": 600,
+      "over50": 1385
+    },
+    {
+      "phase": "LDG",
+      "weight": 2300,
+      "pa": 4000,
+      "oat": 15,
+      "roll": 625,
+      "over50": 1435
+    }
+  ]
+}
